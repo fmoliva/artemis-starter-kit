@@ -1,0 +1,3699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artemis — AI QA Testing Agent</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --accent3: #06b6d4;
+    --green: #10b981;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --border: #1e2d45;
+    --nav-bg: rgba(10, 14, 26, 0.92);
+    --hero-title-start: #fff;
+  }
+
+  html[data-theme="light"] {
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface2: #f1f5f9;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --nav-bg: rgba(248, 250, 252, 0.92);
+    --hero-title-start: #1e293b;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  /* SECTIONS */
+  section {
+    min-height: 100vh;
+    padding: 120px 80px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  section.compact {
+    min-height: auto;
+    padding: 80px;
+  }
+
+  /* HERO */
+  #hero {
+    background: radial-gradient(ellipse at 60% 40%, rgba(99, 102, 241, 0.12) 0%, transparent 65%),
+                radial-gradient(ellipse at 20% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 55%),
+                var(--bg);
+    text-align: center;
+    align-items: center;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #a5b4fc;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--accent3);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--accent3);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  h1.hero-title {
+    font-size: clamp(52px, 8vw, 96px);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--hero-title-start) 0%, #a5b4fc 50%, var(--accent3) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+
+  .hero-sub {
+    font-size: 20px;
+    color: var(--muted);
+    margin-bottom: 48px;
+    font-weight: 400;
+    max-width: 520px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 48px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 36px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: block;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+
+  /* SECTION HEADERS */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .section-desc {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 580px;
+    margin-bottom: 56px;
+  }
+
+  /* WHAT IS SECTION */
+  #what {
+    background: var(--bg);
+  }
+
+  .what-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 16px;
+  }
+
+  .what-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .what-card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .what-card-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .what-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .what-card p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* PIPELINE / ARCHITECTURE */
+  #architecture {
+    background: radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.07) 0%, transparent 55%),
+                var(--bg);
+  }
+
+  .pipeline-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .pipeline-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    position: relative;
+  }
+
+  .pipe-node {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 22px;
+    text-align: center;
+    position: relative;
+    transition: all 0.25s;
+    cursor: default;
+    min-width: 170px;
+  }
+
+  .pipe-node:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  .pipe-node.orchestrator {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.08);
+    min-width: 220px;
+  }
+
+  .pipe-node.parallel-a { border-color: rgba(6, 182, 212, 0.5); }
+  .pipe-node.parallel-b { border-color: rgba(139, 92, 246, 0.5); }
+  .pipe-node.parallel-c { border-color: rgba(245, 158, 11, 0.5); }
+
+  .pipe-node.analyzer {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.06);
+  }
+
+  .pipe-node.improver {
+    border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(16, 185, 129, 0.06);
+  }
+
+  .pipe-node.report {
+    border-color: rgba(99, 102, 241, 0.6);
+    background: rgba(99, 102, 241, 0.1);
+    min-width: 260px;
+  }
+
+  .pipe-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: block;
+  }
+
+  .pipe-mode {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 3px;
+    display: block;
+  }
+
+  .mode-coordinate { color: var(--accent); }
+  .mode-parse { color: var(--accent3); }
+  .mode-execute { color: var(--accent3); }
+  .mode-explore { color: #8b5cf6; }
+  .mode-perform { color: var(--orange); }
+  .mode-analyze { color: var(--red); }
+  .mode-improve { color: var(--green); }
+  .mode-report { color: var(--accent); }
+
+  .pipe-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    padding: 8px 0;
+  }
+
+  .pipe-arrow-h {
+    color: var(--muted);
+    font-size: 18px;
+  }
+
+  .parallel-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    background: var(--bg);
+    padding: 2px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .pipe-fan {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    padding: 0 20px;
+  }
+
+  .fan-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  /* PROJECT PANEL */
+  #project {
+    background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(6,182,212,0.06) 100%);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 40px;
+  }
+
+  .project-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .project-title-group h2 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .project-url {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    color: var(--accent3);
+    opacity: 0.85;
+  }
+
+  .project-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .proj-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .proj-badge.staging  { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.25); }
+  .proj-badge.prod     { background: rgba(239,68,68,0.12);  color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+  .proj-badge.local    { background: rgba(99,102,241,0.12); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
+  .proj-badge.built    { background: rgba(148,163,184,0.08); color: var(--muted); border: 1px solid var(--border); }
+
+  .project-stats-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .proj-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .proj-stat-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent3);
+  }
+
+  .proj-stat-lbl {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .project-panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .proj-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+
+  .proj-panel-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .proj-modules-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .proj-module-chip {
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: rgba(6,182,212,0.08);
+    border: 1px solid rgba(6,182,212,0.2);
+    color: var(--accent3);
+    border-radius: 6px;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+
+  .proj-module-chip span {
+    color: var(--muted);
+    font-size: 10px;
+    margin-left: 4px;
+  }
+
+  .proj-qs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .proj-qs-item {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--accent3);
+    background: rgba(6,182,212,0.06);
+    border: 1px solid rgba(6,182,212,0.15);
+    border-radius: 6px;
+    padding: 6px 10px;
+    word-break: break-all;
+  }
+
+  .proj-data-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .proj-data-row {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    align-items: baseline;
+  }
+
+  .proj-data-key {
+    color: var(--muted);
+    font-weight: 600;
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+
+  .proj-data-val {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--text);
+    font-size: 11px;
+  }
+
+  .proj-team-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .proj-team-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .proj-team-row:last-child { border-bottom: none; }
+
+  .proj-team-role {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .proj-team-name {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .proj-generated-note {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.6;
+  }
+
+  /* COMMANDS */
+  #commands {
+    background: var(--bg);
+  }
+
+  .commands-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .cmd-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .cmd-card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .cmd-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .cmd-tag {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent3);
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    border-radius: 8px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+
+  .cmd-card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .cmd-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .cmd-refs {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ref-tag {
+    font-size: 10px;
+    font-weight: 600;
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* AGENTS */
+  #agents {
+    background: radial-gradient(ellipse at 10% 60%, rgba(6, 182, 212, 0.06) 0%, transparent 55%), var(--bg);
+  }
+
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .agent-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    transition: all 0.2s;
+  }
+
+  .agent-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+
+  .agent-mode-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin-bottom: 12px;
+  }
+
+  .badge-coordinate { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+  .badge-parse { background: rgba(6,182,212,0.15); color: #67e8f9; }
+  .badge-execute { background: rgba(6,182,212,0.12); color: #67e8f9; }
+  .badge-explore { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+  .badge-perform { background: rgba(245,158,11,0.15); color: #fcd34d; }
+  .badge-analyze { background: rgba(239,68,68,0.15); color: #fca5a5; }
+  .badge-improve { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+
+  .agent-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .agent-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* CAPABILITIES */
+  #capabilities {
+    background: var(--bg);
+  }
+
+  .cap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+  }
+
+  .cap-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+
+  .cap-card:hover { border-color: rgba(99, 102, 241, 0.35); }
+
+  .cap-icon {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+
+  .cap-card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .cap-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cap-list li {
+    font-size: 12.5px;
+    color: var(--muted);
+    padding-left: 14px;
+    position: relative;
+  }
+
+  .cap-list li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* PRINCIPLES */
+  #principles {
+    background: radial-gradient(ellipse at 90% 50%, rgba(99,102,241,0.07) 0%, transparent 50%), var(--bg);
+  }
+
+  .principles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 780px;
+  }
+
+  .principle {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    transition: border-color 0.2s;
+  }
+
+  .principle:hover { border-color: rgba(99,102,241,0.35); }
+
+  .principle-num {
+    font-size: 28px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    flex-shrink: 0;
+    line-height: 1;
+    width: 36px;
+  }
+
+  .principle-content h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .principle-content p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* GETTING STARTED */
+  #getting-started {
+    background: radial-gradient(ellipse at 20% 60%, rgba(6,182,212,0.07) 0%, transparent 55%), var(--bg);
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    position: relative;
+    margin-top: 8px;
+  }
+
+  .steps-grid::before {
+    content: '';
+    position: absolute;
+    top: 36px;
+    left: calc(12.5% + 20px);
+    right: calc(12.5% + 20px);
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    z-index: 0;
+  }
+
+  .step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: 0 0 24px rgba(99,102,241,0.2);
+  }
+
+  .step-num {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+  }
+
+  .step-item h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .step-item p {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .step-code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--accent3);
+    background: rgba(6,182,212,0.1);
+    border: 1px solid rgba(6,182,212,0.2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    margin-top: 8px;
+    display: inline-block;
+  }
+
+  .folder-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin-top: 56px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 2;
+    max-width: 600px;
+  }
+
+  .folder-tree-header {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .tree-root { color: var(--accent3); font-weight: 700; }
+  .tree-dir { color: #a5b4fc; }
+  .tree-file { color: var(--muted); }
+  .tree-env { color: var(--green); }
+  .tree-guide { color: var(--orange); }
+  .tree-comment { color: #475569; font-size: 11px; }
+
+  /* DEMO / SEE IT IN ACTION */
+  #demo {
+    background: var(--bg);
+  }
+
+  .demo-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .demo-tab {
+    padding: 8px 18px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .demo-tab:hover { border-color: var(--accent); color: var(--text); }
+  .demo-tab.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .demo-panel { display: none; }
+  .demo-panel.active { display: block; }
+
+  .chat-window {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    max-width: 820px;
+  }
+
+  .chat-titlebar {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .chat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  .chat-title {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    margin-left: 4px;
+  }
+
+  .chat-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-height: 520px;
+    overflow-y: auto;
+  }
+
+  .chat-body::-webkit-scrollbar { width: 4px; }
+  .chat-body::-webkit-scrollbar-track { background: transparent; }
+  .chat-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .msg.user { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .avatar-user {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+  }
+
+  .avatar-artemis {
+    background: linear-gradient(135deg, var(--accent3), #0e7490);
+    color: white;
+    font-size: 11px;
+  }
+
+  .msg-bubble {
+    max-width: 78%;
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .msg.user .msg-bubble {
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-top-right-radius: 4px;
+    color: var(--text);
+  }
+
+  .msg.artemis .msg-bubble {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+    color: var(--text);
+  }
+
+  .msg-bubble pre {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11.5px;
+    line-height: 1.7;
+    margin-top: 10px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .pass { color: var(--green); font-weight: 700; }
+  .fail { color: var(--red); font-weight: 700; }
+  .warn { color: var(--orange); font-weight: 700; }
+  .info { color: var(--accent3); }
+  .dim { color: var(--muted); }
+  .bold { font-weight: 700; }
+
+  .inline-code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11.5px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: #a5b4fc;
+  }
+
+  .msg-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 4px;
+    padding: 0 2px;
+  }
+
+  .msg.user .msg-label { text-align: right; }
+
+  /* INSTALL SECTION */
+  .install-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 48px;
+  }
+
+  .install-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+  }
+
+  .install-card.recommended {
+    border-color: rgba(99,102,241,0.5);
+    background: linear-gradient(135deg, rgba(99,102,241,0.08), var(--surface));
+  }
+
+  .install-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    background: rgba(99,102,241,0.15);
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin-bottom: 12px;
+  }
+
+  .install-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .install-card p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .install-steps {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .install-steps li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 13px;
+  }
+
+  .install-step-num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    background: rgba(99,102,241,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-top: 1px;
+  }
+
+  .install-steps code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--accent3);
+    display: block;
+    margin-top: 4px;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .share-note {
+    margin-top: 40px;
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 12px;
+    padding: 24px 28px;
+  }
+
+  .share-note h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 12px;
+  }
+
+  .share-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .share-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .share-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  .share-table td:first-child {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--accent3);
+  }
+
+  .share-table .share-yes { color: var(--green); font-weight: 700; }
+  .share-table .share-no { color: var(--red); }
+
+  /* CTA / FOOTER */
+  #cta {
+    background: radial-gradient(ellipse at 50% 50%, rgba(99,102,241,0.15) 0%, rgba(6,182,212,0.05) 50%, transparent 70%), var(--bg);
+    text-align: center;
+    align-items: center;
+    min-height: 60vh;
+  }
+
+  .cta-cmd {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 20px;
+    color: var(--accent3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 28px;
+    display: inline-block;
+    margin-bottom: 40px;
+    letter-spacing: 0.5px;
+  }
+
+  .cta-note {
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 480px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 24px 40px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    section { padding: 100px 32px 60px; }
+    .what-grid, .cap-grid, .install-grid { grid-template-columns: 1fr; }
+    .pipe-fan { flex-direction: column; }
+    .pipe-node { min-width: 200px; width: 100%; }
+  }
+
+  /* THEME TOGGLE */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 4px 12px 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--text); }
+  .theme-toggle .toggle-icon { font-size: 14px; line-height: 1; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">ARTEMIS</div>
+  <ul class="nav-links">
+
+    <li><a href="#what">Overview</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#commands">Commands</a></li>
+    <li><a href="#agents">Agents</a></li>
+    <li><a href="#any-app">Any App</a></li>
+    <li><a href="#capabilities">Capabilities</a></li>
+    <li><a href="#hitl">Human in Loop</a></li>
+    <li><a href="#live-dashboard">Live Dashboard</a></li>
+    <li><a href="#tc-list">Manual QA</a></li>
+    <li><a href="#port">TC Portability</a></li>
+    <li><a href="#analysis">Analysis Tools</a></li>
+    <li><a href="#getting-started">Get Started</a></li>
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#install">Install</a></li>
+  </ul>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+    <span class="toggle-icon" id="themeIcon">☀️</span>
+    <span id="themeLabel">Light</span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-badge">AI QA Testing Agent</div>
+  <h1 class="hero-title">Artemis</h1>
+  <p class="hero-sub">A 7-agent AI pipeline that tests, explores, and improves web application quality — autonomously.</p>
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-number">7</span>
+      <span class="stat-label">Specialized Agents</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">12</span>
+      <span class="stat-label">Commands</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">13</span>
+      <span class="stat-label">Reference Docs</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">8</span>
+      <span class="stat-label">Selector Levels</span>
+    </div>
+  </div>
+</section>
+
+<!-- ARTEMIS:PROJECT_START -->
+<!-- ARTEMIS:PROJECT_END -->
+
+<!-- WHAT IS ARTEMIS -->
+<section id="what">
+  <p class="section-label">What is it</p>
+  <h2>One agent.<br>End-to-end QA coverage.</h2>
+  <p class="section-desc">Artemis combines automated test execution, exploratory testing, load testing, bug analysis, and continuous improvement into a single AI-powered workflow.</p>
+  <div class="what-grid">
+    <div class="what-card">
+      <span class="what-card-icon">🧪</span>
+      <h3>Scripted Test Execution</h3>
+      <p>Runs existing test cases against any web app using Playwright MCP (Chromium). Reports pass/fail with screenshots, console errors, and network logs — not just "it failed."</p>
+    </div>
+    <div class="what-card">
+      <span class="what-card-icon">🔍</span>
+      <h3>Autonomous Exploration</h3>
+      <p>Crawls the app breadth-first, harvests all interactions, probes forms for edge cases and security issues — finding bugs that no one thought to write tests for.</p>
+    </div>
+    <div class="what-card">
+      <span class="what-card-icon">⚡</span>
+      <h3>Real Load Testing</h3>
+      <p>Identifies critical API endpoints, generates actual k6 scripts for baseline, stress, spike, and endurance scenarios. Real numbers: P95 latency, error rate, throughput.</p>
+    </div>
+    <div class="what-card">
+      <span class="what-card-icon">🛠</span>
+      <h3>Self-Healing Selectors</h3>
+      <p>8-level selector hierarchy with 3-retry self-healing. Tests don't break on minor UI changes — they adapt, annotate confidence, and flag fragile selectors for improvement.</p>
+    </div>
+    <div class="what-card">
+      <span class="what-card-icon">🗄️</span>
+      <h3>SQLite Persistence</h3>
+      <p>All test cases, results, and bugs live in <code style="color:var(--accent3);font-size:12px;">artemis.db</code>. No folder confusion, no lost history — query TCs in milliseconds instead of reading 500-line files.</p>
+    </div>
+    <div class="what-card">
+      <span class="what-card-icon">⚡</span>
+      <h3>15× Faster TC Loading</h3>
+      <p>DB queries replace file reads. A Quick Action that previously consumed ~1,200 tokens reading a markdown file now uses ~80 tokens from a single SQL query.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ANY APP -->
+<section id="any-app" class="compact">
+  <p class="section-label">App-Agnostic</p>
+  <h2>Works on any web app.<br>Not just the one it was built on.</h2>
+  <p class="section-desc">Artemis has no hardcoded assumptions about the app it's testing. Give it a URL and it figures out the rest — whether you're testing a hospital system, a clinic portal, an e-commerce site, or an internal admin dashboard.</p>
+
+  <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 40px;">
+    <div style="flex: 1; min-width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px;">
+      <div style="font-size: 22px; margin-bottom: 12px;">🌐</div>
+      <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;">Any Browser-Accessible Web App</h3>
+      <p style="font-size: 13px; color: var(--muted); line-height: 1.65;">Playwright MCP drives a real browser. If a human can open it in Chrome, Artemis can test it — regardless of stack, framework, or domain.</p>
+    </div>
+    <div style="flex: 1; min-width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px;">
+      <div style="font-size: 22px; margin-bottom: 12px;">📋</div>
+      <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;">Bring Your Own Test Cases</h3>
+      <p style="font-size: 13px; color: var(--muted); line-height: 1.65;">Upload existing test scripts from a <strong style="color:var(--text)">.doc / .docx file</strong> and Artemis parses them into its structured format automatically via <code style="color:var(--accent3); font-size:12px;">/parse</code>. Numbered lists, prose, tables — any format works.</p>
+    </div>
+    <div style="flex: 1; min-width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px;">
+      <div style="font-size: 22px; margin-bottom: 12px;">🔍</div>
+      <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;">Start With Zero Test Cases</h3>
+      <p style="font-size: 13px; color: var(--muted); line-height: 1.65;">No existing tests? Run <code style="color:var(--accent3); font-size:12px;">/explore</code> first. It crawls every page, probes every form, and generates a complete test suite from scratch — then you execute it.</p>
+    </div>
+  </div>
+
+  <div style="margin-top: 28px; background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.25); border-radius: 14px; padding: 24px 28px;">
+    <p style="font-size: 13px; font-weight: 700; color: var(--accent3); margin-bottom: 14px; letter-spacing: 0.5px;">WORKFLOW — NEW APP WITH NO EXISTING TESTS</p>
+    <div style="display: flex; gap: 0; flex-wrap: wrap; align-items: stretch;">
+      <div style="flex: 1; min-width: 160px; padding: 12px 16px; border-right: 1px solid rgba(99,102,241,0.2);">
+        <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">STEP 1</div>
+        <code style="font-size: 13px; color: var(--accent3);">/artemis [url]</code>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">Onboard the app, scaffold the project folder</div>
+      </div>
+      <div style="flex: 1; min-width: 160px; padding: 12px 16px; border-right: 1px solid rgba(99,102,241,0.2);">
+        <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">STEP 2</div>
+        <code style="font-size: 13px; color: var(--accent3);">/explore [url]</code>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">Auto-generate test cases from live app crawl</div>
+      </div>
+      <div style="flex: 1; min-width: 160px; padding: 12px 16px; border-right: 1px solid rgba(99,102,241,0.2);">
+        <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">STEP 2 ALT</div>
+        <code style="font-size: 13px; color: var(--accent3);">/parse [your.docx]</code>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">Or upload existing test scripts from a Word doc</div>
+      </div>
+      <div style="flex: 1; min-width: 160px; padding: 12px 16px;">
+        <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">STEP 3</div>
+        <code style="font-size: 13px; color: var(--accent3);">/run all</code>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">Execute everything, watch it live on the dashboard</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <p class="section-label">Architecture</p>
+  <h2>7-Agent Pipeline</h2>
+  <p class="section-desc">Claude shifts cognitive mode between 7 specialized agents, coordinated by an orchestrator that fans out work in parallel and merges results into a single report. All data flows through <code style="color:var(--accent3);font-size:15px;">artemis.db</code> — test cases, results, and bugs persisted in SQLite.</p>
+
+  <div class="pipeline-wrapper">
+
+    <!-- Input -->
+    <div class="pipe-row">
+      <div class="pipe-node" style="border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.05); min-width:200px;">
+        <span class="pipe-label">Test Request</span>
+        <span class="pipe-mode" style="color: var(--muted);">/artemis [url] [scope]</span>
+      </div>
+    </div>
+
+    <!-- HITL Gate 1 -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+      <div style="width:2px;height:10px;background:rgba(99,102,241,0.25);"></div>
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 16px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.35);border-radius:20px;">
+        <span style="font-size:13px;">⏸</span>
+        <span style="font-size:10px;font-weight:800;letter-spacing:.8px;color:#f59e0b;">GATE 1</span>
+        <span style="width:1px;height:12px;background:rgba(245,158,11,0.3);"></span>
+        <span style="font-size:11px;font-weight:600;color:var(--text);">Pre-Run Confirmation</span>
+        <span style="font-size:11px;color:var(--muted);">— human approves URL + scope</span>
+      </div>
+      <div style="width:2px;height:10px;background:rgba(99,102,241,0.25);"></div>
+    </div>
+
+    <!-- Orchestrator -->
+    <div class="pipe-row">
+      <div class="pipe-node orchestrator">
+        <span class="pipe-label">QA Orchestrator</span>
+        <span class="pipe-mode mode-coordinate">Coordinate Mode</span>
+      </div>
+    </div>
+
+    <div class="pipe-arrow">↓</div>
+    <div class="pipe-row" style="margin-bottom: 4px;">
+      <span class="parallel-label">parallel execution</span>
+    </div>
+    <div class="pipe-arrow" style="padding: 4px 0;">↓</div>
+
+    <!-- Parallel Layer 1 -->
+    <div class="pipe-fan">
+      <div class="pipe-node parallel-a">
+        <span class="pipe-label">Test Case Parser</span>
+        <span class="pipe-mode mode-parse">Parse Mode</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:3px 8px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:.4px;">⏸ Gate 2 — TC Approval</span>
+      </div>
+      <div class="pipe-node parallel-b">
+        <span class="pipe-label">Exploratory QA</span>
+        <span class="pipe-mode mode-explore">Explore Mode</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:3px 8px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:.4px;">⏸ Gate 2 — TC Approval</span>
+      </div>
+      <div class="pipe-node parallel-c">
+        <span class="pipe-label">Load Test Planner</span>
+        <span class="pipe-mode mode-perform">Perform Mode</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:3px 8px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:.4px;">⏸ Gate 3 — Env Check</span>
+      </div>
+    </div>
+
+    <div class="pipe-arrow">↓</div>
+
+    <!-- Parallel Layer 2 -->
+    <div class="pipe-fan">
+      <div class="pipe-node parallel-a">
+        <span class="pipe-label">Playwright Runner</span>
+        <span class="pipe-mode mode-execute">Execute Mode</span>
+      </div>
+      <div class="pipe-node parallel-b">
+        <span class="pipe-label">UI Discovery</span>
+        <span class="pipe-mode mode-explore">Explore Mode</span>
+      </div>
+      <div class="pipe-node parallel-c">
+        <span class="pipe-label">Load Test Generator</span>
+        <span class="pipe-mode mode-perform">Perform Mode</span>
+      </div>
+    </div>
+
+    <div class="pipe-arrow">↓</div>
+    <div class="pipe-row" style="margin-bottom: 4px;">
+      <span class="parallel-label">results merged</span>
+    </div>
+    <div class="pipe-arrow" style="padding: 4px 0;">↓</div>
+
+    <!-- Bug Analyzer -->
+    <div class="pipe-row">
+      <div class="pipe-node analyzer">
+        <span class="pipe-label">Bug Analyzer</span>
+        <span class="pipe-mode mode-analyze">Analyze Mode</span>
+      </div>
+    </div>
+
+    <div class="pipe-arrow">↓</div>
+
+    <!-- Test Improvement -->
+    <div class="pipe-row">
+      <div class="pipe-node improver">
+        <span class="pipe-label">Test Improvement Agent</span>
+        <span class="pipe-mode mode-improve">Improve Mode</span>
+      </div>
+    </div>
+
+    <!-- HITL Gate 5 -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+      <div style="width:2px;height:10px;background:rgba(99,102,241,0.25);"></div>
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 16px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.35);border-radius:20px;">
+        <span style="font-size:13px;">⏸</span>
+        <span style="font-size:10px;font-weight:800;letter-spacing:.8px;color:#f59e0b;">GATE 5</span>
+        <span style="width:1px;height:12px;background:rgba(245,158,11,0.3);"></span>
+        <span style="font-size:11px;font-weight:600;color:var(--text);">Improvement Changes Approval</span>
+        <span style="font-size:11px;color:var(--muted);">— human approves proposed TC changes</span>
+      </div>
+      <div style="width:2px;height:10px;background:rgba(99,102,241,0.25);"></div>
+    </div>
+
+    <!-- Report -->
+    <div class="pipe-row">
+      <div class="pipe-node report">
+        <span class="pipe-label">QA + Performance Report</span>
+        <span class="pipe-mode mode-report">Combined Output</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- COMMANDS -->
+<section id="commands">
+  <p class="section-label">Commands</p>
+  <h2>12 Ways to Use Artemis</h2>
+  <p class="section-desc">Each command activates a specific agent path. Start with <code style="color:var(--accent3); background: rgba(6,182,212,0.1); padding: 2px 8px; border-radius: 6px; font-size: 15px;">/artemis</code> for the full pipeline.</p>
+
+  <div class="commands-grid">
+    <div class="cmd-card" style="border-color: rgba(99,102,241,0.35); grid-column: 1/-1;">
+      <div class="cmd-header">
+        <span class="cmd-tag">/artemis [url] [scope?]</span>
+        <h3>Full Pipeline — Main Entry Point</h3>
+      </div>
+      <p>Runs the complete 7-agent pipeline. Parses test cases, executes them in Playwright, runs exploratory QA, generates k6 load tests, analyzes all bugs found, reviews the test suite, and produces a combined QA + Performance Report.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">part-1-orchestrator</span>
+        <span class="ref-tag">part-3-playwright-runner</span>
+        <span class="ref-tag">part-4-exploratory-qa</span>
+        <span class="ref-tag">part-5-load-test-agent</span>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <span class="cmd-tag">/run [scope] [url]</span>
+        <h3>Playwright Runner</h3>
+      </div>
+      <p>Execute a specific scope of test cases against a URL. Generates `.spec.ts` files and inline pass/fail results with screenshots on failure.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">part-3-playwright-runner</span>
+        <span class="ref-tag">part-8-browser-tools</span>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <span class="cmd-tag">/explore [url] [area?]</span>
+        <h3>Exploratory QA</h3>
+      </div>
+      <p>Autonomous browser crawl. Maps all pages, probes every form and table, generates new test cases from what it discovers, identifies coverage gaps vs. existing test suite.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">part-4-exploratory-qa</span>
+        <span class="ref-tag">part-10-ai-test-generation</span>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <span class="cmd-tag">/load [url] [scenario?]</span>
+        <h3>Load Testing</h3>
+      </div>
+      <p>Scores API endpoints by business criticality, proposes 4 load scenarios (baseline/stress/spike/endurance), and generates production-ready k6 scripts after approval. Baseline is always safe — Stress, Spike, and Endurance require a staging environment confirmation before running.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">part-5-load-test-agent</span>
+        <span class="ref-tag" style="color:#f59e0b;border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.08);">⚠ staging only for stress+</span>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <span class="cmd-tag">/bug [jam-url]</span>
+        <h3>Bug Analyzer</h3>
+      </div>
+      <p>Deep-dives a specific failure. Pulls console logs, network failures, and user event timeline from Jam.dev recordings. Produces a full bug report with root cause hypothesis and a regression TC.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">part-6-bug-analyzer</span>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <span class="cmd-tag">/improve [test-file]</span>
+        <h3>Test Improvement</h3>
+      </div>
+      <p>5-axis review of the test suite: redundancy, coverage gaps, assertion strength, selector fragility, test independence. Presents findings before applying any changes.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">part-7-test-improvement</span>
+        <span class="ref-tag">part-9-selector-strategy</span>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <span class="cmd-tag">/parse [file-or-text]</span>
+        <h3>Test Case Parser</h3>
+      </div>
+      <p>Converts any input into structured test cases saved to the living test library. Accepts <strong style="color:var(--text)">.doc / .docx files</strong>, Markdown, numbered lists, or plain prose. Flags vague or ambiguous items for review before saving.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">part-2-test-case-parser</span>
+        <span class="ref-tag">.docx supported</span>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-header">
+        <span class="cmd-tag">/dashboard</span>
+        <h3>Live Dashboard + TC Checklist</h3>
+      </div>
+      <p>Two tools in one command. Starts the <strong style="color:var(--text)">Artemis Live</strong> server for real-time automated run monitoring — and rebuilds <strong style="color:var(--text)">artemis-tc-list.html</strong>, a self-contained manual QA checklist organized by module → submodule. The checklist auto-rebuilds whenever new TCs are added via <code style="font-size:12px">/parse</code>, <code style="font-size:12px">/explore</code>, or <code style="font-size:12px">/improve</code>.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">artemis-live.html</span>
+        <span class="ref-tag">artemis-tc-list.html</span>
+        <span class="ref-tag">server.js</span>
+      </div>
+    </div>
+    <div class="cmd-card" style="border-color: rgba(16,185,129,0.25);">
+      <div class="cmd-header">
+        <span class="cmd-tag">/port [source] [app-name] [url?]</span>
+        <h3>TC Portability</h3>
+      </div>
+      <p>Copies applicable test cases from an existing project to a new app. Presents a module mapping table for approval, scores each TC for portability, wraps app-specific text in <code style="color:var(--accent3);font-size:12px;">[REVIEW:]</code> tags, reassigns IDs using the target prefix scheme, and rebuilds the dashboard.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">part-12-tc-portability</span>
+        <span class="ref-tag">module mapping</span>
+        <span class="ref-tag">[REVIEW:] tags</span>
+      </div>
+    </div>
+    <div class="cmd-card" style="border-color: rgba(245,158,11,0.2);">
+      <div class="cmd-header">
+        <span class="cmd-tag">/matrix [module?]</span>
+        <h3>Coverage Matrix</h3>
+      </div>
+      <p>Reads your test library and generates a Feature × Test-Type grid — Happy Path, Edge Case, Error Handling, Security, Performance. Instantly see which modules are missing security probes or error handling TCs before something slips through.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">reads test-cases/</span>
+        <span class="ref-tag">no browser needed</span>
+        <span class="ref-tag">coverage-matrix.md</span>
+      </div>
+    </div>
+    <div class="cmd-card" style="border-color: rgba(245,158,11,0.2);">
+      <div class="cmd-header">
+        <span class="cmd-tag">/diff [source] [target] [module?]</span>
+        <h3>TC Library Diff</h3>
+      </div>
+      <p>Compares two projects' test case libraries. Shows TCs unique to each, diverged steps, and unresolved <code style="color:var(--accent3);font-size:12px;">[REVIEW:]</code> tags left over from a <code style="font-size:12px;">/port</code>. Useful for tracking how a new app's suite grows over time.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">reads test-cases/</span>
+        <span class="ref-tag">no browser needed</span>
+        <span class="ref-tag">tc-diff.md</span>
+      </div>
+    </div>
+    <div class="cmd-card" style="border-color: rgba(245,158,11,0.2);">
+      <div class="cmd-header">
+        <span class="cmd-tag">/scope [url] "feature-description"</span>
+        <h3>Regression Scope</h3>
+      </div>
+      <p>Tell Artemis what changed in plain English. It scores every TC for relevance — by module match, action verbs, and field names — then picks the top 20 most likely to catch a regression and hands you a pre-filled <code style="color:var(--accent3);font-size:12px;">/run</code> command.</p>
+      <div class="cmd-refs">
+        <span class="ref-tag">part-13-regression-scope</span>
+        <span class="ref-tag">relevance scoring</span>
+        <span class="ref-tag">pre-filled /run</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- AGENTS -->
+<section id="agents">
+  <p class="section-label">Cognitive Modes</p>
+  <h2>One Claude.<br>Seven Mindsets.</h2>
+  <p class="section-desc">Artemis doesn't spawn separate processes. Claude shifts its cognitive mode to embody each specialist agent — the way a senior QA engineer thinks differently when writing tests vs. debugging vs. reviewing.</p>
+
+  <div class="agents-grid">
+    <div class="agent-card">
+      <span class="agent-mode-badge badge-coordinate">Coordinate</span>
+      <h3>QA Orchestrator</h3>
+      <p>Routes the pipeline, tracks parallel threads, merges results from all three execution paths. Decides what to skip, what to prioritize, what to surface in the executive summary.</p>
+    </div>
+    <div class="agent-card">
+      <span class="agent-mode-badge badge-parse">Parse</span>
+      <h3>Test Case Parser</h3>
+      <p>Extracts structure from chaos. Converts any format into standardized TCs. Infers intent, flags ambiguity, never silently discards a test case. Maintains TC numbering continuity.</p>
+    </div>
+    <div class="agent-card">
+      <span class="agent-mode-badge badge-execute">Execute</span>
+      <h3>Playwright Runner</h3>
+      <p>Trust nothing. Assert only what is observed. Screenshot on every failure. Every result is evidence-based — PASS means it was seen, FAIL has a screenshot and URL to prove it.</p>
+    </div>
+    <div class="agent-card">
+      <span class="agent-mode-badge badge-explore">Explore</span>
+      <h3>Exploratory QA + UI Discovery</h3>
+      <p>Curious and adversarial. Maps every page, tries every form field, looks for what testers forget to test. Finds security probes, empty states, edge cases, and unexpected flows.</p>
+    </div>
+    <div class="agent-card">
+      <span class="agent-mode-badge badge-perform">Perform</span>
+      <h3>Load Test Planner + Generator</h3>
+      <p>Identifies choke points, thinks in concurrent users. Generates real, runnable k6 scripts — not simulated traffic, not estimates. P95, error rate, throughput against real thresholds.</p>
+    </div>
+    <div class="agent-card">
+      <span class="agent-mode-badge badge-analyze">Analyze</span>
+      <h3>Bug Analyzer</h3>
+      <p>Root cause over symptoms. Reproduces minimally. Classifies by layer (UI/API/Data/State/Timing). Enriches every bug with Jam.dev console logs, network failures, and user event timeline.</p>
+    </div>
+    <div class="agent-card">
+      <span class="agent-mode-badge badge-improve">Improve</span>
+      <h3>Test Improvement Agent</h3>
+      <p>Senior QA code reviewer. Every test must justify its existence. Scores on 5 axes, presents findings, gets approval, applies changes, appends improvement history. The test suite evolves.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section id="capabilities">
+  <p class="section-label">Key Capabilities</p>
+  <h2>Built for real QA work.</h2>
+  <p class="section-desc">Every feature was designed around the problems that come up in actual testing engagements.</p>
+
+  <div class="cap-grid">
+    <div class="cap-card">
+      <div class="cap-icon">🔗</div>
+      <h3>Jam.dev Integration</h3>
+      <ul class="cap-list">
+        <li>Pull console errors (filtered by level)</li>
+        <li>Pull failed network requests (4xx/5xx)</li>
+        <li>Reconstruct user event timeline</li>
+        <li>Add enriched bug analysis as Jam comment</li>
+      </ul>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">🎯</div>
+      <h3>Self-Healing Selectors</h3>
+      <ul class="cap-list">
+        <li>8-level hierarchy (role → label → text → …)</li>
+        <li>3-retry protocol before marking not found</li>
+        <li>85% confidence threshold for derived selectors</li>
+        <li>Improvement tracking in .spec.ts comments</li>
+      </ul>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">📊</div>
+      <h3>Load Testing (k6)</h3>
+      <ul class="cap-list">
+        <li>Endpoint scoring by business criticality</li>
+        <li>4 scenarios: baseline / stress / spike / endurance</li>
+        <li>Real k6 JS scripts, ready to run</li>
+        <li>P95 latency + error rate thresholds</li>
+      </ul>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">🧬</div>
+      <h3>AI Test Generation</h3>
+      <ul class="cap-list">
+        <li>Explore-first: snapshot UI before generating</li>
+        <li>7-level hierarchy: happy path → security probes</li>
+        <li>Test data matrix with XSS, SQL injection strings</li>
+        <li>10-point coverage scoring before saving</li>
+      </ul>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">📚</div>
+      <h3>Living Test Library</h3>
+      <ul class="cap-list">
+        <li>TC IDs are permanent — never reused or deleted</li>
+        <li>Module / Feature / TC hierarchy with index table</li>
+        <li>DB-backed: query any TC in milliseconds</li>
+        <li>DOCX → structured TC conversion via /parse</li>
+      </ul>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">🗄️</div>
+      <h3>SQLite Database</h3>
+      <ul class="cap-list">
+        <li>test_cases, test_runs, test_results, bugs — all structured</li>
+        <li>15× fewer tokens vs reading .md files</li>
+        <li>Full run history persists across sessions</li>
+        <li>Query: open bugs by module, pass rates over time</li>
+      </ul>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">📄</div>
+      <h3>Combined QA Report</h3>
+      <ul class="cap-list">
+        <li>Executive summary with health rating (🟢/🟡/🔴)</li>
+        <li>PASS / FAIL / BLOCKED / SKIP results table</li>
+        <li>Exploratory discoveries with priority</li>
+        <li>Performance section with k6 metrics</li>
+      </ul>
+    </div>
+    <div class="cap-card">
+      <div class="cap-icon">📡</div>
+      <h3>Live Monitor</h3>
+      <ul class="cap-list">
+        <li>Real-time TC progress via Server-Sent Events</li>
+        <li>5-panel view: progress · bugs · observations · discoveries · test cases</li>
+        <li>Full TC reference tree with live status icons</li>
+        <li>Auto-expands active module, scrolls to current TC</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- PRINCIPLES -->
+<section id="principles">
+  <p class="section-label">Core Principles</p>
+  <h2>What Artemis<br>always does.</h2>
+  <div class="principles-list">
+    <div class="principle">
+      <div class="principle-num">1</div>
+      <div class="principle-content">
+        <h3>Explore before asserting</h3>
+        <p>UI reality overrides specs. Artemis navigates the live app before making any assertions — what's in the browser matters more than what's in the document.</p>
+      </div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">2</div>
+      <div class="principle-content">
+        <h3>Evidence-based results</h3>
+        <p>Every PASS was observed. Every FAIL has a screenshot, URL, expected result, and actual result. No result is reported from memory or assumption.</p>
+      </div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">3</div>
+      <div class="principle-content">
+        <h3>Self-healing selectors</h3>
+        <p>3-retry protocol with 8-level selector hierarchy before marking an element not found. Tests adapt to minor UI changes instead of failing on them.</p>
+      </div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">4</div>
+      <div class="principle-content">
+        <h3>Living test library</h3>
+        <p>The test-cases/ directory is a versioned artifact. TC IDs are permanent. Tests are improved continuously — never silently deleted or overwritten.</p>
+      </div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">5</div>
+      <div class="principle-content">
+        <h3>Performance is a finding</h3>
+        <p>/load generates real k6 scripts with measurable thresholds. Slow pages observed during functional testing are noted as observations — separate from test failures.</p>
+      </div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">6</div>
+      <div class="principle-content">
+        <h3>Security always in scope</h3>
+        <p>Every form gets injection and boundary probes. XSS, SQL injection, path traversal, long strings, and unicode inputs are tested without being explicitly asked.</p>
+      </div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">7</div>
+      <div class="principle-content">
+        <h3>Never generate code without executing first</h3>
+        <p>.spec.ts files are derived from observed browser behavior — not written speculatively. Selectors come from the actual DOM, not from reading the source code.</p>
+      </div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">8</div>
+      <div class="principle-content">
+        <h3>Results persist forever</h3>
+        <p>Every test run, result, and bug is written to <code style="color:var(--accent3);font-size:13px;">artemis.db</code> — not just a markdown file. History survives server restarts. Bugs stay in the dashboard until marked resolved.</p>
+      </div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">9</div>
+      <div class="principle-content">
+        <h3>Always close Chromium after testing</h3>
+        <p>Playwright MCP uses a dedicated Chromium instance — never the user's Chrome browser. After every test run, Chromium is closed immediately. The live dashboard runs independently and does not need the browser to stay open.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HUMAN IN THE LOOP -->
+<section id="hitl">
+  <p class="section-label">Human in the Loop</p>
+  <h2>Artemis runs autonomously.<br>Until it needs you.</h2>
+  <p class="section-desc">Artemis executes without interruption — no mid-run permission prompts, no approval requests for navigation, screenshots, or file writes. It pauses at exactly 5 defined gates where human judgment is required before continuing.</p>
+
+  <div style="display:grid;gap:16px;margin-top:40px;">
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:22px 24px;display:flex;gap:20px;align-items:flex-start;">
+      <div style="min-width:36px;height:36px;border-radius:8px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--accent);">1</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+          <h3 style="font-size:16px;font-weight:700;">Pre-Run Confirmation</h3>
+          <span style="font-size:11px;font-family:monospace;background:rgba(99,102,241,0.12);color:var(--accent);padding:2px 8px;border-radius:4px;">/artemis</span>
+          <span style="font-size:11px;font-family:monospace;background:rgba(99,102,241,0.12);color:var(--accent);padding:2px 8px;border-radius:4px;">/run</span>
+          <span style="margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.5px;background:rgba(239,68,68,0.12);color:#ef4444;padding:2px 8px;border-radius:4px;">NEVER SKIPPED</span>
+        </div>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6;">Shows URL, scope, TC count, and which paths will run. Human confirms the target and scope before any browser opens or any test executes.</p>
+      </div>
+    </div>
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:10px;padding:22px 24px;display:flex;gap:20px;align-items:flex-start;">
+      <div style="min-width:36px;height:36px;border-radius:8px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--accent2);">2</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+          <h3 style="font-size:16px;font-weight:700;">AI-Generated TC Approval</h3>
+          <span style="font-size:11px;font-family:monospace;background:rgba(139,92,246,0.12);color:var(--accent2);padding:2px 8px;border-radius:4px;">/explore</span>
+          <span style="font-size:11px;font-family:monospace;background:rgba(139,92,246,0.12);color:var(--accent2);padding:2px 8px;border-radius:4px;">/parse</span>
+          <span style="margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.5px;background:rgba(239,68,68,0.12);color:#ef4444;padding:2px 8px;border-radius:4px;">NEVER SKIPPED</span>
+        </div>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6;">AI-generated or converted test cases are shown with any inferred or ambiguous flags. Human reviews and approves before any TC is saved to the library.</p>
+      </div>
+    </div>
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--orange);border-radius:10px;padding:22px 24px;display:flex;gap:20px;align-items:flex-start;">
+      <div style="min-width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--orange);">3</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+          <h3 style="font-size:16px;font-weight:700;">Load Test Environment Check</h3>
+          <span style="font-size:11px;font-family:monospace;background:rgba(245,158,11,0.12);color:var(--orange);padding:2px 8px;border-radius:4px;">/load</span>
+          <span style="margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.5px;background:rgba(245,158,11,0.12);color:var(--orange);padding:2px 8px;border-radius:4px;">BASELINE AUTO-RUNS</span>
+        </div>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6;">Before stress, spike, or endurance scenarios, human confirms the URL is a staging environment. If production — Artemis refuses. Baseline scenario always runs without asking.</p>
+      </div>
+    </div>
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent3);border-radius:10px;padding:22px 24px;display:flex;gap:20px;align-items:flex-start;">
+      <div style="min-width:36px;height:36px;border-radius:8px;background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--accent3);">4</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+          <h3 style="font-size:16px;font-weight:700;">Module Mapping Approval</h3>
+          <span style="font-size:11px;font-family:monospace;background:rgba(6,182,212,0.12);color:var(--accent3);padding:2px 8px;border-radius:4px;">/port</span>
+          <span style="margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.5px;background:rgba(239,68,68,0.12);color:#ef4444;padding:2px 8px;border-radius:4px;">NEVER SKIPPED</span>
+        </div>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6;">Before porting test cases between projects, Artemis presents the source → target module mapping table. Human confirms, corrects, or rejects mappings. Wrong mappings silently mis-route all ported TCs.</p>
+      </div>
+    </div>
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:10px;padding:22px 24px;display:flex;gap:20px;align-items:flex-start;">
+      <div style="min-width:36px;height:36px;border-radius:8px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--green);">5</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+          <h3 style="font-size:16px;font-weight:700;">Test Improvement Changes Approval</h3>
+          <span style="font-size:11px;font-family:monospace;background:rgba(16,185,129,0.12);color:var(--green);padding:2px 8px;border-radius:4px;">/improve</span>
+          <span style="margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.5px;background:rgba(239,68,68,0.12);color:#ef4444;padding:2px 8px;border-radius:4px;">NEVER SKIPPED</span>
+        </div>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6;">After 5-axis review, Artemis presents all proposed changes — redundant TC removal, selector fixes, new AI-generated TCs. Human approves all, selects specific items, or rejects. No change is applied automatically.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p style="margin-top:32px;padding:16px 20px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted);line-height:1.7;">
+    <strong style="color:var(--text);">Outside these 5 gates, Artemis proceeds autonomously.</strong>
+    Navigation, screenshots, DB writes, bug logging, observations, Chromium close, and dashboard updates all happen without asking. Once Gate 1 is approved, the run executes to completion without interruption.
+  </p>
+</section>
+
+<!-- LIVE DASHBOARD -->
+<section id="live-dashboard" class="compact">
+  <p class="section-label">Live Dashboard</p>
+  <h2>Watch every test<br>run in real time.</h2>
+  <p class="section-desc">Start the Artemis Live server once. The dashboard auto-updates as each TC executes — no refreshes, no polling delays. Backed by SQLite: bugs and results persist across server restarts.</p>
+
+  <!-- ── DASHBOARD VISUAL MOCKUP ── -->
+  <div style="margin: 48px 0 56px; position: relative;">
+
+    <!-- Glow behind the browser -->
+    <div style="position:absolute;inset:-40px;background:radial-gradient(ellipse at 50% 60%,rgba(99,102,241,0.12) 0%,transparent 70%);pointer-events:none;z-index:0;"></div>
+
+    <!-- Browser chrome -->
+    <div style="position:relative;z-index:1;border-radius:14px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.06);max-width:1100px;margin:0 auto;">
+
+      <!-- Browser top bar -->
+      <div style="background:#1a1f2e;padding:10px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;gap:6px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#ef4444;opacity:0.8;"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:#f59e0b;opacity:0.8;"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:#10b981;opacity:0.8;"></div>
+        </div>
+        <div style="flex:1;background:#0d1117;border-radius:6px;padding:4px 12px;font-size:11px;color:#64748b;font-family:monospace;text-align:center;max-width:320px;margin:0 auto;">http://localhost:7373</div>
+      </div>
+
+      <!-- Dashboard itself -->
+      <div style="background:#0a0e1a;font-family:'Segoe UI',system-ui,sans-serif;">
+
+        <!-- Dashboard header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:44px;background:rgba(10,14,26,0.96);border-bottom:1px solid rgba(99,102,241,0.3);">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:13px;font-weight:800;letter-spacing:2.5px;background:linear-gradient(135deg,#6366f1,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">ARTEMIS LIVE</span>
+            <span style="font-size:10px;color:#64748b;">Shop &rsaquo; Products &rsaquo; Checkout</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:7px;height:7px;border-radius:50%;background:#10b981;animation:none;box-shadow:0 0 6px #10b981;"></div>
+              <span style="font-size:10px;font-weight:700;letter-spacing:1px;color:#e2e8f0;">RUNNING</span>
+            </div>
+            <span style="font-size:10px;font-weight:700;color:#10b981;">■ LIVE</span>
+            <span style="font-size:11px;color:#64748b;font-variant-numeric:tabular-nums;">07:42</span>
+          </div>
+        </div>
+
+        <!-- 5-panel grid -->
+        <div style="display:grid;grid-template-columns:1.05fr 0.75fr 0.95fr 0.8fr 1.2fr;gap:8px;padding:8px;height:340px;overflow:hidden;">
+
+          <!-- P1: Progress -->
+          <div style="background:#111827;border:1px solid #1e2d45;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+            <div style="padding:7px 11px;font-size:9px;font-weight:700;letter-spacing:1px;color:#64748b;border-bottom:1px solid #1e2d45;display:flex;justify-content:space-between;">TEST PROGRESS <span style="color:#6366f1;">69%</span></div>
+            <!-- Current TC -->
+            <div style="padding:10px 11px 8px;border-bottom:1px solid #1e2d45;">
+              <div style="font-size:8px;color:#64748b;letter-spacing:0.8px;margin-bottom:3px;">CURRENTLY EXECUTING</div>
+              <div style="font-size:10px;font-weight:700;color:#06b6d4;font-family:monospace;margin-bottom:2px;">TC-SHOP-012</div>
+              <div style="font-size:10px;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Shipping method can be selected</div>
+            </div>
+            <!-- Progress bar -->
+            <div style="padding:8px 11px;border-bottom:1px solid #1e2d45;">
+              <div style="height:4px;background:#1e2d45;border-radius:2px;overflow:hidden;margin-bottom:4px;">
+                <div style="height:100%;width:69%;background:linear-gradient(90deg,#6366f1,#06b6d4);border-radius:2px;"></div>
+              </div>
+              <div style="font-size:10px;color:#64748b;text-align:right;">18 / 26 tests</div>
+            </div>
+            <!-- Counts -->
+            <div style="display:flex;gap:4px;padding:6px 11px;border-bottom:1px solid #1e2d45;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:4px;padding:3px 7px;border-radius:20px;background:#1a2235;font-size:10px;font-weight:700;color:#10b981;flex:1;min-width:50px;">✓ <span>17</span> PASS</div>
+              <div style="display:flex;align-items:center;gap:4px;padding:3px 7px;border-radius:20px;background:#1a2235;font-size:10px;font-weight:700;color:#ef4444;flex:1;min-width:50px;">✗ <span>1</span> FAIL</div>
+              <div style="display:flex;align-items:center;gap:4px;padding:3px 7px;border-radius:20px;background:#1a2235;font-size:10px;font-weight:700;color:#6366f1;flex:1;min-width:50px;">○ <span>8</span> LEFT</div>
+            </div>
+            <!-- Timeline -->
+            <div style="padding:5px 11px 3px;font-size:8px;letter-spacing:1px;color:#64748b;">RECENT RESULTS</div>
+            <div style="flex:1;overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 11px;cursor:pointer;background:#1a2235;" onclick="openDemoModal('result','tc084')" onmouseover="this.style.background='#1e2a3d'" onmouseout="this.style.background='#1a2235'">
+                <div style="width:5px;height:5px;border-radius:50%;background:#10b981;flex-shrink:0;"></div>
+                <span style="font-size:9px;font-family:monospace;color:#06b6d4;width:64px;flex-shrink:0;">TC-SHOP-011</span>
+                <span style="font-size:10px;color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Standard shipping available</span>
+                <span style="font-size:9px;font-weight:700;color:#10b981;">PASS</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 11px;cursor:pointer;" onclick="openDemoModal('result','tc083')" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'">
+                <div style="width:5px;height:5px;border-radius:50%;background:#10b981;flex-shrink:0;"></div>
+                <span style="font-size:9px;font-family:monospace;color:#06b6d4;width:64px;flex-shrink:0;">TC-SHOP-010</span>
+                <span style="font-size:10px;color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Express delivery shown first</span>
+                <span style="font-size:9px;font-weight:700;color:#10b981;">PASS</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 11px;cursor:pointer;" onclick="openDemoModal('result','tc092')" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'">
+                <div style="width:5px;height:5px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
+                <span style="font-size:9px;font-family:monospace;color:#06b6d4;width:64px;flex-shrink:0;">TC-SHOP-019</span>
+                <span style="font-size:10px;color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Checkout submit endpoint</span>
+                <span style="font-size:9px;font-weight:700;color:#ef4444;">FAIL</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 11px;cursor:pointer;" onclick="openDemoModal('result','tc082')" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'">
+                <div style="width:5px;height:5px;border-radius:50%;background:#10b981;flex-shrink:0;"></div>
+                <span style="font-size:9px;font-family:monospace;color:#06b6d4;width:64px;flex-shrink:0;">TC-SHOP-009</span>
+                <span style="font-size:10px;color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Item quantity updates cart total</span>
+                <span style="font-size:9px;font-weight:700;color:#10b981;">PASS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- P2: Bugs -->
+          <div style="background:#111827;border:1px solid #1e2d45;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+            <div style="padding:7px 11px;font-size:9px;font-weight:700;letter-spacing:1px;color:#64748b;border-bottom:1px solid #1e2d45;display:flex;justify-content:space-between;">BUGS FOUND <span style="background:#1e2d45;padding:1px 6px;border-radius:10px;">1</span></div>
+            <!-- Bug card — clickable -->
+            <div style="padding:9px 11px;border-bottom:1px solid #1e2d45;cursor:pointer;transition:background 0.1s;background:#111827;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='#111827'" onclick="openDemoModal('bug','bug001')">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                <span style="font-size:9px;font-family:monospace;color:#06b6d4;font-weight:700;">BUG-001</span>
+                <span style="font-size:8px;color:#64748b;">· TC-SHOP-019</span>
+                <span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,0.15);color:#ef4444;">CRITICAL</span>
+              </div>
+              <div style="font-size:11px;font-weight:600;line-height:1.3;margin-bottom:4px;color:#f1f5f9;">Checkout submit returns HTTP 500</div>
+              <div style="font-size:9px;font-family:monospace;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">POST /api/v1/orders/checkout <span style="background:rgba(239,68,68,0.12);color:#ef4444;padding:1px 4px;border-radius:3px;">500</span></div>
+            </div>
+            <div style="padding:20px 12px;text-align:center;color:#334155;font-size:11px;opacity:0.5;">Click any card<br>to view full details</div>
+          </div>
+
+          <!-- P3: Observations -->
+          <div style="background:#111827;border:1px solid #1e2d45;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+            <div style="padding:7px 11px;font-size:9px;font-weight:700;letter-spacing:1px;color:#64748b;border-bottom:1px solid #1e2d45;display:flex;justify-content:space-between;">OBSERVATIONS <span style="background:#1e2d45;padding:1px 6px;border-radius:10px;">6</span></div>
+            <div style="padding:8px 11px;border-bottom:1px solid #1e2d45;cursor:pointer;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'" onclick="openDemoModal('obs','obs006')">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:9px;font-family:monospace;color:#8b5cf6;font-weight:700;">OBS-006</span>
+                <span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(99,102,241,0.15);color:#6366f1;">OPEN</span>
+              </div>
+              <div style="font-size:11px;font-weight:600;margin-bottom:4px;color:#f1f5f9;">Guest checkout toggle has no visual confirmation</div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <span style="font-size:8px;font-weight:600;padding:1px 4px;border-radius:3px;background:rgba(148,163,184,0.08);color:#94a3b8;">LOW</span>
+                <span style="font-size:9px;color:#64748b;">Shop &rsaquo; Checkout</span>
+              </div>
+            </div>
+            <div style="padding:8px 11px;border-bottom:1px solid #1e2d45;cursor:pointer;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'" onclick="openDemoModal('obs','obs005')">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:9px;font-family:monospace;color:#8b5cf6;font-weight:700;">OBS-005</span>
+                <span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(6,182,212,0.15);color:#06b6d4;">RAISED</span>
+              </div>
+              <div style="font-size:11px;font-weight:600;margin-bottom:4px;color:#f1f5f9;">URL route is /checkout not /cart/checkout</div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <span style="font-size:8px;font-weight:600;padding:1px 4px;border-radius:3px;background:rgba(234,179,8,0.12);color:#eab308;">MEDIUM</span>
+                <span style="font-size:9px;color:#64748b;">Shop &rsaquo; Navigation</span>
+              </div>
+            </div>
+            <div style="padding:8px 11px;cursor:pointer;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'" onclick="openDemoModal('obs','obs004')">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:9px;font-family:monospace;color:#8b5cf6;font-weight:700;">OBS-004</span>
+                <span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(16,185,129,0.15);color:#10b981;">TC-ADDED</span>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:#f1f5f9;">Out-of-stock items correctly blocked from cart</div>
+            </div>
+          </div>
+
+          <!-- P4: Discoveries -->
+          <div style="background:#111827;border:1px solid #1e2d45;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+            <div style="padding:7px 11px;font-size:9px;font-weight:700;letter-spacing:1px;color:#64748b;border-bottom:1px solid #1e2d45;">DISCOVERIES</div>
+            <div style="padding:9px 11px;border-bottom:1px solid #1e2d45;cursor:pointer;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'" onclick="openDemoModal('disc','disc1')">
+              <div style="font-size:11px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">Coupon field only renders when activated</div>
+              <div style="font-size:10px;color:#64748b;line-height:1.5;">The coupon input field is absent from the DOM until the user clicks "Add coupon" — not just hidden.</div>
+            </div>
+            <div style="padding:9px 11px;border-bottom:1px solid #1e2d45;cursor:pointer;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'" onclick="openDemoModal('disc','disc2')">
+              <div style="font-size:11px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">API server runs on a separate port</div>
+              <div style="font-size:10px;color:#64748b;line-height:1.5;">API calls go to a different port than the SPA frontend — network assertions must target the API base URL.</div>
+            </div>
+            <div style="padding:9px 11px;cursor:pointer;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'" onclick="openDemoModal('disc','disc3')">
+              <div style="font-size:11px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">Cart state persists via localStorage</div>
+              <div style="font-size:10px;color:#64748b;line-height:1.5;">Cart items survive page refresh — tests run sequentially don't need to re-add items if state already exists.</div>
+            </div>
+          </div>
+
+          <!-- P5: Test Cases -->
+          <div style="background:#111827;border:1px solid #1e2d45;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+            <div style="padding:7px 11px;font-size:9px;font-weight:700;letter-spacing:1px;color:#64748b;border-bottom:1px solid #1e2d45;display:flex;justify-content:space-between;">TEST CASES <span style="background:#1e2d45;padding:1px 6px;border-radius:10px;">823</span></div>
+            <div style="padding:6px 8px;border-bottom:1px solid #1e2d45;">
+              <div style="width:100%;padding:4px 8px;border-radius:5px;background:#1a2235;border:1px solid #1e2d45;font-size:10px;color:#475569;">Search TC ID or title…</div>
+            </div>
+            <!-- Module: Shop (active) -->
+            <div style="background:#1a2235;display:flex;align-items:center;gap:6px;padding:6px 9px;cursor:pointer;position:sticky;top:0;">
+              <span style="font-size:8px;color:#06b6d4;">▶</span>
+              <span style="font-size:10px;font-weight:700;flex:1;color:#f1f5f9;">Shop</span>
+              <span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:10px;background:rgba(6,182,212,0.12);color:#06b6d4;">18/26</span>
+            </div>
+            <div style="padding:3px 9px 2px 18px;font-size:8px;letter-spacing:0.8px;color:#475569;opacity:0.7;">CHECKOUT FLOW</div>
+            <!-- Running TC -->
+            <div style="display:flex;align-items:center;gap:6px;padding:3px 9px 3px 18px;background:rgba(99,102,241,0.06);cursor:pointer;" onclick="openDemoModal('tc','tc085')" onmouseover="this.style.background='rgba(99,102,241,0.12)'" onmouseout="this.style.background='rgba(99,102,241,0.06)'">
+              <span style="font-size:9px;color:#6366f1;width:11px;text-align:center;">◉</span>
+              <span style="font-size:9px;font-family:monospace;color:#6366f1;width:64px;flex-shrink:0;">TC-SHOP-012</span>
+              <span style="font-size:10px;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">Shipping method selectable</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;padding:3px 9px 3px 18px;cursor:pointer;" onclick="openDemoModal('tc','tc084')" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'">
+              <span style="font-size:9px;color:#10b981;width:11px;text-align:center;">✓</span>
+              <span style="font-size:9px;font-family:monospace;color:#06b6d4;width:64px;flex-shrink:0;">TC-SHOP-011</span>
+              <span style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">Standard shipping available</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;padding:3px 9px 3px 18px;cursor:pointer;" onclick="openDemoModal('tc','tc092')" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'">
+              <span style="font-size:9px;color:#ef4444;width:11px;text-align:center;">✗</span>
+              <span style="font-size:9px;font-family:monospace;color:#06b6d4;width:64px;flex-shrink:0;">TC-SHOP-019</span>
+              <span style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">Checkout submit endpoint</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;padding:3px 9px 3px 18px;cursor:pointer;" onclick="openDemoModal('tc','tc093')" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'">
+              <span style="font-size:9px;color:#1e2d45;width:11px;text-align:center;">○</span>
+              <span style="font-size:9px;font-family:monospace;color:#06b6d4;width:64px;flex-shrink:0;">TC-SHOP-020</span>
+              <span style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">Cancel returns to cart</span>
+            </div>
+            <!-- Collapsed module -->
+            <div style="background:#1a2235;display:flex;align-items:center;gap:6px;padding:6px 9px;border-top:1px solid #1e2d45;cursor:pointer;">
+              <span style="font-size:8px;color:#64748b;">▶</span>
+              <span style="font-size:10px;font-weight:700;flex:1;color:#f1f5f9;">Auth</span>
+              <span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:10px;background:rgba(16,185,129,0.12);color:#10b981;">62/62</span>
+            </div>
+            <div style="background:#1a2235;display:flex;align-items:center;gap:6px;padding:6px 9px;border-top:1px solid #1e2d45;cursor:pointer;">
+              <span style="font-size:8px;color:#64748b;">▶</span>
+              <span style="font-size:10px;font-weight:700;flex:1;color:#f1f5f9;">Dashboard</span>
+              <span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:10px;background:#1e2d45;color:#64748b;">215</span>
+            </div>
+          </div>
+
+        </div><!-- end grid -->
+
+        <!-- Footer bar -->
+        <div style="height:24px;background:#111827;border-top:1px solid #1e2d45;display:flex;align-items:center;gap:16px;padding:0 14px;font-size:9px;color:#475569;">
+          <span>Mode: SSE (live)</span>
+          <span>Server: http://localhost:7373</span>
+          <span style="flex:1;text-align:right;opacity:0.5;">↺ live-status.json</span>
+        </div>
+
+      </div><!-- end dashboard -->
+    </div><!-- end browser window -->
+
+    <!-- Caption -->
+    <div style="text-align:center;margin-top:20px;font-size:12px;color:#475569;">
+      Live view updates automatically as Artemis runs. &nbsp;·&nbsp; <span style="color:#6366f1;">Click any card to view full details.</span>
+    </div>
+  </div>
+  <!-- ── END MOCKUP ── -->
+
+  <!-- ── DEMO DETAIL MODAL ── -->
+  <div id="demoOverlay" onclick="closeDemoModal(event)" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+    <div id="demoModal" style="background:#111827;border:1px solid rgba(99,102,241,0.3);border-radius:14px;width:min(640px,95vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,0.8);overflow:hidden;">
+      <div id="demoModalHeader" style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1e2d45;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="demoTypePill" style="font-size:9px;font-weight:800;letter-spacing:1.2px;padding:3px 8px;border-radius:4px;">—</span>
+          <span id="demoModalId" style="font-size:13px;font-family:monospace;font-weight:700;color:#e2e8f0;">—</span>
+        </div>
+        <button onclick="closeDemoModal(null)" style="background:none;border:none;color:#64748b;font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;">&times;</button>
+      </div>
+      <div id="demoModalBody" style="overflow-y:auto;padding:18px 20px;font-size:13px;color:#e2e8f0;line-height:1.6;"></div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const DATA = {
+      bug: {
+        bug001: {
+          id:'BUG-001', title:'Checkout submit returns HTTP 500',
+          severity:'CRITICAL', status:'OPEN', tc:'TC-SHOP-019', module:'Shop › Checkout', date:'2026-03-15',
+          endpoint:'POST /api/v1/orders/checkout', httpStatus:'500',
+          description:'Clicking the "Place Order" button triggers a POST to /api/v1/orders/checkout which returns HTTP 500 Internal Server Error. The order is never created and the user sees no error message — the form simply stays open.',
+          stepsToRepro:['Navigate to /checkout','Fill all required fields (Shipping Address, Payment Method, Contact)','Click the "Place Order" button','Observe network tab'],
+          expected:'HTTP 200 OK response; order created; user redirected to order confirmation page.',
+          actual:'HTTP 500 Internal Server Error returned from POST /api/v1/orders/checkout. No toast/error shown to user. Form remains open.',
+          networkEvidence:'POST http://[api-host]/api/v1/orders/checkout\nStatus: 500 Internal Server Error\nPayload: {"userId":42,"cartId":7,"paymentMethod":"CREDIT_CARD","shippingAddress":{"street":"123 Main St","city":"Springfield","zip":"62701"}}',
+          consoleError:'Error: Request failed with status code 500\n  at createError (axios.min.js:1)\n  at settle (axios.min.js:1)',
+          impact:'Blocker — no orders can be placed through the checkout flow. Critical revenue path is broken.',
+          possibleCause:'API server may be throwing an unhandled exception on order creation. Possible DB constraint violation or missing required field on the server side.',
+          suggestedFix:'Check server logs for the stack trace associated with this 500. Verify the request payload matches the expected schema. Confirm the orders service is healthy and the DB connection is live.'
+        }
+      },
+      obs: {
+        obs006: {
+          id:'OBS-006', title:'Guest checkout toggle has no visual confirmation after activation',
+          severity:'LOW', status:'OPEN', tc:'TC-SHOP-015', module:'Shop › Checkout', date:'2026-03-15',
+          note:'When the "Checkout as Guest" toggle is switched on, no visual indicator (color change, border, badge) confirms the active state to the user. The toggle moves but the surrounding form section looks identical to the off state, which may confuse users.',
+          suggestion:'Add a distinct active color (e.g., green border or background tint) to the guest section when the toggle is ON to provide clear feedback.'
+        },
+        obs005: {
+          id:'OBS-005', title:'URL route is /checkout, not /cart/checkout',
+          severity:'MEDIUM', status:'RAISED', tc:'TC-SHOP-001', module:'Shop › Navigation', date:'2026-03-15',
+          note:'The checkout page loads at /checkout rather than the expected /cart/checkout. This may indicate the route is shared across modules and not scoped to the cart flow, or the nav structure differs from the test spec assumptions.',
+          suggestion:'Confirm with the team whether /checkout is intentional. Update test cases to reflect the correct base path if confirmed.'
+        },
+        obs004: {
+          id:'OBS-004', title:'Out-of-stock items correctly blocked from cart',
+          severity:'INFO', status:'TC-ADDED', tc:'TC-SHOP-007', module:'Shop › Product Listing', date:'2026-03-15',
+          note:'Out-of-stock products correctly disable the "Add to Cart" button and show a "Sold Out" badge. This behavior was not explicitly in the original test spec — a new TC was generated to cover it.',
+          suggestion:'New TC added: TC-SHOP-028 — Verify "Add to Cart" is disabled for out-of-stock products.'
+        }
+      },
+      disc: {
+        disc1: {
+          title:'Coupon field only renders when activated',
+          body:'The coupon input field only appears in the DOM when the user clicks "Add coupon code". For standard checkouts, the field is completely absent — not just hidden. This conditional render pattern affects test assertions: selectors relying on the coupon input will throw if coupon mode has not been activated first.',
+          impact:'Test Impact: Steps that check for the coupon input must first click "Add coupon code" to activate coupon mode, or the locator will not be found.',
+          tcGenerated:'New TC generated: TC-SHOP-025 — Verify coupon field is absent from DOM when coupon mode is inactive.'
+        },
+        disc2: {
+          title:'API server runs on a separate port from the frontend',
+          body:'All API calls from the SPA frontend go to a different port than the UI server — this is a decoupled SPA + separate REST API. Network assertions must target the API base URL, not the frontend URL.',
+          impact:'Test Impact: All network interception must use the API base URL. URL assertions for API calls should reference the API host. A separate service availability check is needed before test run.',
+          tcGenerated:null
+        },
+        disc3: {
+          title:'Cart state persists via localStorage across page refresh',
+          body:'When navigating away and returning to /checkout, cart items remain populated from localStorage. Tests launched sequentially after an add-to-cart step do not need to re-add items — the state is already present in localStorage.',
+          impact:'Test Impact: TC-SHOP-001 (Add to cart) must account for pre-populated cart state when tests run sequentially. A cleanup step may be needed between independent test runs.',
+          tcGenerated:'New TC generated: TC-SHOP-026 — Verify cart is empty when localStorage is cleared before session.'
+        }
+      },
+      result: {
+        tc084: { id:'TC-SHOP-011', title:'Standard shipping available as default option', status:'PASS', time:'09:14:32', notes:'Shipping method dropdown opened, "Standard Shipping" shown as default selection. Express and Pickup options also present. No unexpected options visible.' },
+        tc083: { id:'TC-SHOP-010', title:'Express delivery option shown first in list', status:'PASS', time:'09:12:11', notes:'Shipping options rendered in correct order: Express at top, Standard second, Pickup last. Price labels and estimated delivery dates present for each.' },
+        tc092: { id:'TC-SHOP-019', title:'Checkout submit sends correct payload', status:'FAIL', time:'09:31:44', notes:'FAIL — POST /api/v1/orders/checkout returned 500. BUG-001 filed. Order not persisted. No user-facing error displayed. Form remained open after click.' },
+        tc082: { id:'TC-SHOP-009', title:'Item quantity updates cart total correctly', status:'PASS', time:'09:10:58', notes:'Changed quantity from 1 to 3 — cart total updated from $29.99 to $89.97 as expected. Tax and shipping recalculated correctly. No stale values observed.' }
+      },
+      tc: {
+        tc085: { id:'TC-SHOP-012', title:'Shipping method can be selected', status:'RUNNING', priority:'HIGH', type:'Functional', module:'Shop › Checkout', preconditions:['User logged in','Items in cart','Navigate to /checkout'], steps:['Click the Shipping Method dropdown','Select "Express" from the options','Observe form updates'], expectedResult:['Shipping method shows "Express" selected','Estimated delivery date updates to reflect Express timeline','Order total recalculates to include Express shipping cost'] },
+        tc084: { id:'TC-SHOP-011', title:'Standard shipping available as default option', status:'PASS', priority:'HIGH', type:'Functional', module:'Shop › Checkout', preconditions:['User logged in','Items in cart','Navigate to /checkout'], steps:['Open the Shipping Method dropdown','Observe the default selected option','Check available alternatives'], expectedResult:['Standard Shipping is pre-selected by default','Express and Pickup options are visible','Price and estimated delivery shown for each'] },
+        tc092: { id:'TC-SHOP-019', title:'Checkout submit returns 200 and creates order', status:'FAIL', priority:'CRITICAL', type:'API / Integration', module:'Shop › Checkout', preconditions:['All required fields completed','Shipping method selected','Valid payment method entered'], steps:['Complete all required checkout fields','Click "Place Order" button','Monitor network request to /api/v1/orders/checkout'], expectedResult:['HTTP 200 OK response','Order created in system','User redirected to order confirmation page','Confirmation email sent'] },
+        tc093: { id:'TC-SHOP-020', title:'Cancel returns user to cart', status:'PENDING', priority:'MEDIUM', type:'Navigation', module:'Shop › Checkout', preconditions:['Checkout form open','No order placed'], steps:['Click the "Back to Cart" button on the checkout form','Observe navigation'], expectedResult:['Browser navigates back to /cart','No order is created','Cart retains previous items and quantities'] }
+      }
+    };
+
+    function pill(type){
+      const styles = {
+        bug:'background:rgba(239,68,68,0.15);color:#ef4444;',
+        obs:'background:rgba(139,92,246,0.15);color:#a78bfa;',
+        disc:'background:rgba(234,179,8,0.12);color:#fbbf24;',
+        result:'background:rgba(6,182,212,0.12);color:#06b6d4;',
+        tc:'background:rgba(99,102,241,0.15);color:#818cf8;'
+      };
+      const labels = {bug:'BUG',obs:'OBSERVATION',disc:'DISCOVERY',result:'RESULT',tc:'TEST CASE'};
+      return `<span id="demoTypePill" style="font-size:9px;font-weight:800;letter-spacing:1.2px;padding:3px 8px;border-radius:4px;${styles[type]}">${labels[type]}</span>`;
+    }
+
+    function row(label,val,color){
+      if(!val) return '';
+      return `<div style="display:flex;gap:10px;margin-bottom:6px;"><span style="min-width:130px;font-size:11px;color:#475569;flex-shrink:0;">${label}</span><span style="font-size:12px;color:${color||'#cbd5e1'};font-weight:500;">${val}</span></div>`;
+    }
+    function section(label,html){
+      return `<div style="margin-top:16px;"><div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#475569;margin-bottom:6px;">${label}</div>${html}</div>`;
+    }
+    function prose(text){
+      return `<p style="margin:0;font-size:13px;color:#cbd5e1;line-height:1.65;">${text}</p>`;
+    }
+    function code(text){
+      return `<pre style="margin:0;padding:10px 12px;background:#0a0e1a;border:1px solid #1e2d45;border-radius:6px;font-size:11px;color:#94a3b8;font-family:monospace;white-space:pre-wrap;overflow-x:auto;">${text}</pre>`;
+    }
+    function olist(items){
+      return `<ol style="margin:0;padding-left:18px;">${items.map(i=>`<li style="font-size:13px;color:#cbd5e1;margin-bottom:4px;">${i}</li>`).join('')}</ol>`;
+    }
+    function ulist(items){
+      return `<ul style="margin:0;padding-left:18px;">${items.map(i=>`<li style="font-size:13px;color:#cbd5e1;margin-bottom:4px;">${i}</li>`).join('')}</ul>`;
+    }
+    function statusTag(s){
+      const c={PASS:'#10b981',FAIL:'#ef4444',RUNNING:'#6366f1',PENDING:'#64748b',BLOCKED:'#f59e0b'};
+      return `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:4px;background:${c[s]||'#334155'}22;color:${c[s]||'#94a3b8'};">${s}</span>`;
+    }
+
+    function renderBug(d){
+      let h='';
+      h+=`<h3 style="margin:0 0 14px;font-size:16px;color:#f1f5f9;font-weight:700;line-height:1.4;">${d.title}</h3>`;
+      h+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">`;
+      const sev={CRITICAL:'ef4444',HIGH:'f59e0b',MEDIUM:'eab308',LOW:'64748b'};
+      h+=`<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(${sev[d.severity]||'100,116,139'},0.15);color:#${sev[d.severity]||'94a3b8'};">${d.severity}</span>`;
+      h+=`<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(99,102,241,0.12);color:#6366f1;">${d.status}</span>`;
+      h+=`</div>`;
+      h+=row('Source TC',d.tc);
+      h+=row('Module',d.module);
+      h+=row('Date',d.date);
+      if(d.endpoint) h+=row('Endpoint',`<code style="font-size:11px;background:#0a0e1a;padding:1px 5px;border-radius:3px;color:#06b6d4;">${d.endpoint}</code>`,null);
+      if(d.httpStatus) h+=row('HTTP Status',`<span style="color:#ef4444;font-weight:700;">${d.httpStatus}</span>`,null);
+      if(d.description) h+=section('DESCRIPTION',prose(d.description));
+      if(d.stepsToRepro&&d.stepsToRepro.length) h+=section('STEPS TO REPRODUCE',olist(d.stepsToRepro));
+      if(d.expected) h+=section('EXPECTED',prose(d.expected));
+      if(d.actual) h+=section('ACTUAL',prose(d.actual));
+      if(d.networkEvidence) h+=section('NETWORK EVIDENCE',code(d.networkEvidence));
+      if(d.consoleError) h+=section('CONSOLE ERROR',code(d.consoleError));
+      if(d.impact) h+=section('IMPACT',prose(d.impact));
+      if(d.possibleCause) h+=section('POSSIBLE CAUSE',prose(d.possibleCause));
+      if(d.suggestedFix) h+=section('SUGGESTED FIX',prose(d.suggestedFix));
+      return h;
+    }
+
+    function renderObs(d){
+      let h='';
+      h+=`<h3 style="margin:0 0 14px;font-size:16px;color:#f1f5f9;font-weight:700;line-height:1.4;">${d.title}</h3>`;
+      const sevC={HIGH:'f59e0b',MEDIUM:'eab308',LOW:'64748b',INFO:'475569'};
+      const statC={OPEN:'6366f1',RAISED:'06b6d4','TC-ADDED':'10b981'};
+      h+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">`;
+      h+=`<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(${sevC[d.severity]||'71,85,105'},0.15);color:#${sevC[d.severity]||'64748b'};">${d.severity}</span>`;
+      h+=`<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(${statC[d.status]||'99,102,241'},0.12);color:#${statC[d.status]||'6366f1'};">${d.status}</span>`;
+      h+=`</div>`;
+      h+=row('Source TC',d.tc);
+      h+=row('Module',d.module);
+      h+=row('Date',d.date);
+      if(d.note) h+=section('OBSERVATION',prose(d.note));
+      if(d.suggestion) h+=section('SUGGESTION',prose(d.suggestion));
+      return h;
+    }
+
+    function renderDisc(d){
+      let h='';
+      h+=`<h3 style="margin:0 0 12px;font-size:16px;color:#f1f5f9;font-weight:700;line-height:1.4;">${d.title}</h3>`;
+      h+=section('WHAT WAS DISCOVERED',prose(d.body));
+      if(d.impact) h+=section('TEST IMPACT',prose(d.impact));
+      if(d.tcGenerated) h+=section('TC GENERATED',`<p style="margin:0;font-size:12px;font-family:monospace;color:#10b981;background:#0a0e1a;padding:8px 12px;border-radius:6px;border:1px solid #1e2d45;">${d.tcGenerated}</p>`);
+      return h;
+    }
+
+    function renderResult(d){
+      let h='';
+      h+=`<h3 style="margin:0 0 14px;font-size:16px;color:#f1f5f9;font-weight:700;line-height:1.4;">${d.title}</h3>`;
+      h+=`<div style="margin-bottom:14px;">${statusTag(d.status)}</div>`;
+      h+=row('Completed',d.time);
+      h+=section('RUN NOTES',prose(d.notes));
+      return h;
+    }
+
+    function renderTc(d){
+      let h='';
+      h+=`<h3 style="margin:0 0 14px;font-size:16px;color:#f1f5f9;font-weight:700;line-height:1.4;">${d.title}</h3>`;
+      h+=`<div style="margin-bottom:14px;">${statusTag(d.status)}</div>`;
+      h+=row('Module',d.module);
+      h+=row('Priority',d.priority);
+      h+=row('Type',d.type);
+      if(d.preconditions&&d.preconditions.length) h+=section('PRECONDITIONS',ulist(d.preconditions));
+      if(d.steps&&d.steps.length) h+=section('STEPS',olist(d.steps));
+      if(d.expectedResult&&d.expectedResult.length) h+=section('EXPECTED RESULT',ulist(d.expectedResult));
+      return h;
+    }
+
+    window.openDemoModal = function(type, key){
+      const overlay = document.getElementById('demoOverlay');
+      const header  = document.getElementById('demoModalHeader');
+      const body    = document.getElementById('demoModalBody');
+      const idEl    = document.getElementById('demoModalId');
+
+      let d, html='', idText='';
+      if(type==='bug'){
+        d=DATA.bug[key]; if(!d)return;
+        idText=d.id; html=renderBug(d);
+        header.style.borderBottomColor='rgba(239,68,68,0.3)';
+      } else if(type==='obs'){
+        d=DATA.obs[key]; if(!d)return;
+        idText=d.id; html=renderObs(d);
+        header.style.borderBottomColor='rgba(139,92,246,0.3)';
+      } else if(type==='disc'){
+        d=DATA.disc[key]; if(!d)return;
+        idText='DISCOVERY'; html=renderDisc(d);
+        header.style.borderBottomColor='rgba(234,179,8,0.2)';
+      } else if(type==='result'){
+        d=DATA.result[key]; if(!d)return;
+        idText=d.id; html=renderResult(d);
+        header.style.borderBottomColor='rgba(6,182,212,0.2)';
+      } else if(type==='tc'){
+        d=DATA.tc[key]; if(!d)return;
+        idText=d.id; html=renderTc(d);
+        header.style.borderBottomColor='rgba(99,102,241,0.3)';
+      }
+
+      // Set pill
+      const pillStyles={bug:'background:rgba(239,68,68,0.15);color:#ef4444;',obs:'background:rgba(139,92,246,0.15);color:#a78bfa;',disc:'background:rgba(234,179,8,0.12);color:#fbbf24;',result:'background:rgba(6,182,212,0.12);color:#06b6d4;',tc:'background:rgba(99,102,241,0.15);color:#818cf8;'};
+      const pillLabels={bug:'BUG',obs:'OBSERVATION',disc:'DISCOVERY',result:'RESULT',tc:'TEST CASE'};
+      document.getElementById('demoTypePill').style.cssText='font-size:9px;font-weight:800;letter-spacing:1.2px;padding:3px 8px;border-radius:4px;'+pillStyles[type];
+      document.getElementById('demoTypePill').textContent=pillLabels[type];
+      idEl.textContent=idText;
+      body.innerHTML=html;
+      overlay.style.display='flex';
+      document.body.style.overflow='hidden';
+    };
+
+    window.closeDemoModal = function(e){
+      if(e && e.target !== document.getElementById('demoOverlay')) return;
+      document.getElementById('demoOverlay').style.display='none';
+      document.body.style.overflow='';
+    };
+
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape') { document.getElementById('demoOverlay').style.display='none'; document.body.style.overflow=''; }
+    });
+  })();
+  </script>
+
+  <div style="display: flex; gap: 32px; flex-wrap: wrap; margin-top: 48px; align-items: flex-start;">
+    <div style="flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--accent3); margin-bottom: 10px; letter-spacing: 0.5px;">STEP 1 — Start the server</div>
+        <pre style="font-size: 12.5px; color: var(--muted); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; overflow-x: auto;"><span style="color:var(--green)">$</span> node [project]/server.js
+<span style="color:var(--muted)">  ✦ Artemis Live Server
+  → Dashboard: http://localhost:7373</span></pre>
+      </div>
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--accent3); margin-bottom: 10px; letter-spacing: 0.5px;">STEP 2 — Open the dashboard</div>
+        <pre style="font-size: 12.5px; color: var(--muted); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; overflow-x: auto;"><span style="color:var(--green)">$</span> open http://localhost:7373</pre>
+      </div>
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--accent3); margin-bottom: 10px; letter-spacing: 0.5px;">STEP 3 — Run Artemis normally</div>
+        <pre style="font-size: 12.5px; color: var(--muted); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; overflow-x: auto;"><span style="color:var(--green)">$</span> /run TC-SHOP-001 to TC-SHOP-026
+<span style="color:var(--muted)">  Dashboard updates as each TC completes.</span></pre>
+      </div>
+    </div>
+
+    <div style="flex: 1.4; min-width: 340px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 4px;">5 LIVE PANELS</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px;">
+          <div style="font-size: 20px; margin-bottom: 8px;">🔄</div>
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">Test Progress</div>
+          <div style="font-size: 12px; color: var(--muted);">Current TC, progress bar, PASS/FAIL/BLOCKED/SKIP counts, recent timeline</div>
+        </div>
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px;">
+          <div style="font-size: 20px; margin-bottom: 8px;">🐛</div>
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">Bugs</div>
+          <div style="font-size: 12px; color: var(--muted);">Live bug feed with severity badges and endpoint details</div>
+        </div>
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px;">
+          <div style="font-size: 20px; margin-bottom: 8px;">👁</div>
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">Observations</div>
+          <div style="font-size: 12px; color: var(--muted);">UX notes and non-bug findings with impact level and status</div>
+        </div>
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px;">
+          <div style="font-size: 20px; margin-bottom: 8px;">✨</div>
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">Discoveries</div>
+          <div style="font-size: 12px; color: var(--muted);">Undocumented behaviors and learnings captured during the run</div>
+        </div>
+      </div>
+      <div style="background: var(--surface); border: 1px solid rgba(99,102,241,0.3); border-radius: 12px; padding: 16px 18px;">
+        <div style="font-size: 20px; margin-bottom: 8px;">📋</div>
+        <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">Test Case Reference</div>
+        <div style="font-size: 12px; color: var(--muted);">Full TC tree organized by module → submodule. Status icons update live (✓ PASS · ✗ FAIL · ⊘ BLOCKED · ◉ running). Search by TC ID or title. Active module auto-expands.</div>
+      </div>
+      <div style="font-size: 12px; color: var(--muted); padding: 10px 4px;">
+        Connection: SSE (live) → polling fallback → offline banner. Server watches <code style="color:var(--accent3)">results/</code> with 300ms debounce.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MANUAL QA TC LIST -->
+<section id="tc-list" class="compact">
+  <p class="section-label">Manual QA</p>
+  <h2>Not just automated.<br>Manual testing too.</h2>
+  <p class="section-desc">Artemis generates a self-contained interactive checklist from your full test library. Open it in any browser — no server, no login. Mark each TC, add notes, and export results as PDF or HTML whenever you're ready.</p>
+
+  <!-- ── TC LIST MOCKUP ── -->
+  <div style="margin:48px 0 56px;position:relative;">
+    <div style="position:absolute;inset:-40px;background:radial-gradient(ellipse at 50% 60%,rgba(6,182,212,0.10) 0%,transparent 70%);pointer-events:none;z-index:0;"></div>
+
+    <!-- Browser chrome -->
+    <div style="position:relative;z-index:1;border-radius:14px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.06);max-width:1100px;margin:0 auto;">
+
+      <!-- Browser top bar -->
+      <div style="background:#1a1f2e;padding:10px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;gap:6px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#ef4444;opacity:0.8;"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:#f59e0b;opacity:0.8;"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:#10b981;opacity:0.8;"></div>
+        </div>
+        <div style="flex:1;background:#0d1117;border-radius:6px;padding:4px 12px;font-size:11px;color:#64748b;font-family:monospace;text-align:center;max-width:340px;margin:0 auto;">artemis-tc-list.html</div>
+      </div>
+
+      <!-- App -->
+      <div style="background:#0a0e1a;font-family:'Segoe UI',system-ui,sans-serif;">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:46px;background:rgba(10,14,26,0.97);border-bottom:1px solid #1e2d45;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+            <span style="font-size:13px;font-weight:800;letter-spacing:2px;background:linear-gradient(135deg,#6366f1,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">ARTEMIS TC LIST</span>
+            <span style="font-size:10px;color:#64748b;">Your App &nbsp;·&nbsp; Manual QA Checklist</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:10px;font-weight:600;">
+            <span style="padding:2px 8px;border-radius:10px;background:#111827;color:#06b6d4;">⬡ 823</span>
+            <span style="padding:2px 8px;border-radius:10px;background:#111827;color:#10b981;">✓ 42</span>
+            <span style="padding:2px 8px;border-radius:10px;background:#111827;color:#ef4444;">✗ 3</span>
+            <span style="padding:2px 8px;border-radius:10px;background:#111827;color:#f59e0b;">○ 778</span>
+            <span style="color:#475569;font-size:10px;">5% tested</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <div style="padding:4px 10px;border-radius:5px;font-size:10px;font-weight:600;border:1px solid #1e2d45;background:#111827;color:#64748b;cursor:pointer;">⎙ PDF</div>
+            <div style="padding:4px 10px;border-radius:5px;font-size:10px;font-weight:600;border:1px solid #1e2d45;background:#111827;color:#64748b;cursor:pointer;">↓ HTML</div>
+          </div>
+        </div>
+
+        <!-- 3-panel layout -->
+        <div style="display:grid;grid-template-columns:220px 1fr 320px;height:320px;overflow:hidden;">
+
+          <!-- Sidebar -->
+          <div style="background:#111827;border-right:1px solid #1e2d45;overflow:hidden;display:flex;flex-direction:column;">
+            <div style="padding:8px 8px 3px;font-size:9px;font-weight:700;letter-spacing:1px;color:#64748b;">MODULES</div>
+            <!-- Overview item -->
+            <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:1px 4px;border-radius:5px;cursor:pointer;color:#64748b;font-size:12px;">
+              <span style="font-size:9px;width:11px;">▶</span>
+              <span style="flex:1;">📊 Overview</span>
+            </div>
+            <!-- Shop (active+expanded) -->
+            <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:1px 4px;border-radius:5px;background:rgba(99,102,241,0.15);color:#6366f1;font-size:12px;font-weight:600;border-left:3px solid #6366f1;padding-left:7px;">
+              <span style="font-size:9px;width:11px;transform:rotate(90deg);display:inline-block;">▶</span>
+              <span style="flex:1;">Shop</span>
+              <span style="font-size:10px;padding:1px 5px;border-radius:8px;background:rgba(99,102,241,0.2);color:#818cf8;">84</span>
+            </div>
+            <div style="height:2px;margin:1px 12px;background:#1e2d45;border-radius:1px;overflow:hidden;"><div style="height:100%;width:12%;background:#10b981;"></div></div>
+            <!-- Submodules -->
+            <div style="display:flex;align-items:center;gap:5px;padding:4px 10px 4px 24px;font-size:11px;color:#06b6d4;cursor:pointer;">
+              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">checkout</span>
+              <span style="font-size:10px;padding:1px 4px;border-radius:6px;background:#1e2d45;color:#64748b;">26</span>
+            </div>
+            <div style="height:2px;margin:0 12px 2px 24px;background:#1e2d45;border-radius:1px;overflow:hidden;"><div style="height:100%;width:4%;background:#10b981;"></div></div>
+            <div style="display:flex;align-items:center;gap:5px;padding:4px 10px 4px 24px;font-size:11px;color:#475569;cursor:pointer;">
+              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">user-registration</span>
+              <span style="font-size:10px;padding:1px 4px;border-radius:6px;background:#1e2d45;color:#64748b;">18</span>
+            </div>
+            <div style="height:2px;margin:0 12px 2px 24px;background:#1e2d45;border-radius:1px;overflow:hidden;"><div style="height:100%;width:22%;background:#10b981;"></div></div>
+            <div style="display:flex;align-items:center;gap:5px;padding:4px 10px 4px 24px;font-size:11px;color:#475569;cursor:pointer;">
+              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">product-catalog</span>
+              <span style="font-size:10px;padding:1px 4px;border-radius:6px;background:#1e2d45;color:#64748b;">40</span>
+            </div>
+            <div style="height:2px;margin:0 12px 3px 24px;background:#1e2d45;border-radius:1px;overflow:hidden;"><div style="height:100%;width:8%;background:#10b981;"></div></div>
+            <!-- Auth (collapsed) -->
+            <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:1px 4px;border-radius:5px;color:#64748b;font-size:12px;cursor:pointer;">
+              <span style="font-size:9px;width:11px;">▶</span>
+              <span style="flex:1;">Auth</span>
+              <span style="font-size:10px;padding:1px 5px;border-radius:8px;background:#1e2d45;color:#64748b;">62</span>
+            </div>
+            <div style="height:2px;margin:1px 12px;background:#1e2d45;border-radius:1px;overflow:hidden;"><div style="height:100%;width:0%;background:#10b981;"></div></div>
+            <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;margin:1px 4px;border-radius:5px;color:#64748b;font-size:12px;cursor:pointer;">
+              <span style="font-size:9px;width:11px;">▶</span>
+              <span style="flex:1;">Dashboard</span>
+              <span style="font-size:10px;padding:1px 5px;border-radius:8px;background:#1e2d45;color:#64748b;">14</span>
+            </div>
+          </div>
+
+          <!-- Center: TC list -->
+          <div style="display:flex;flex-direction:column;overflow:hidden;border-right:1px solid #1e2d45;">
+            <!-- List header -->
+            <div style="padding:10px 14px;border-bottom:1px solid #1e2d45;background:#111827;">
+              <div style="font-size:12px;font-weight:600;margin-bottom:7px;color:#f1f5f9;">Shop › checkout — 4% tested</div>
+              <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+                <div style="flex:1;min-width:100px;padding:4px 8px;border-radius:5px;background:#1a2235;border:1px solid #1e2d45;font-size:10px;color:#475569;">Search TCs…</div>
+                <div style="padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;border:1px solid #6366f1;background:rgba(99,102,241,0.15);color:#818cf8;">All</div>
+                <div style="padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;border:1px solid #1e2d45;background:#1a2235;color:#64748b;">Pass</div>
+                <div style="padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;border:1px solid #1e2d45;background:#1a2235;color:#64748b;">Fail</div>
+                <div style="padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;border:1px solid #1e2d45;background:#1a2235;color:#64748b;">Pending</div>
+              </div>
+            </div>
+            <!-- Submodule header -->
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;background:#1a2235;border-bottom:1px solid #1e2d45;position:sticky;top:0;">
+              <span style="font-size:10px;font-weight:700;color:#06b6d4;flex-shrink:0;">checkout</span>
+              <span style="font-size:9px;color:#64748b;flex-shrink:0;">26 TCs</span>
+              <div style="flex:1;height:3px;border-radius:2px;background:#1e2d45;max-width:100px;overflow:hidden;"><div style="height:100%;width:4%;background:#10b981;"></div></div>
+              <span style="font-size:9px;font-weight:700;color:#475569;">4%</span>
+            </div>
+            <!-- TC rows -->
+            <div style="flex:1;overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #1e2d45;background:rgba(99,102,241,0.08);border-left:3px solid #6366f1;cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.12)'" onmouseout="this.style.background='rgba(99,102,241,0.08)'">
+                <div style="width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0;"></div>
+                <span style="font-size:10px;font-family:monospace;color:#06b6d4;width:80px;flex-shrink:0;font-weight:700;">TC-SHOP-001</span>
+                <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f1f5f9;">Form loads with all required fields visible</span>
+                <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,0.12);color:#ef4444;font-weight:700;flex-shrink:0;">High</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #1e2d45;cursor:pointer;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'">
+                <div style="width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
+                <span style="font-size:10px;font-family:monospace;color:#06b6d4;width:80px;flex-shrink:0;font-weight:700;">TC-SHOP-002</span>
+                <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#94a3b8;">Shipping address section populates correctly</span>
+                <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,0.12);color:#ef4444;font-weight:700;flex-shrink:0;">High</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #1e2d45;cursor:pointer;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'">
+                <div style="width:7px;height:7px;border-radius:50%;background:#1e2d45;border:1px solid #334155;flex-shrink:0;"></div>
+                <span style="font-size:10px;font-family:monospace;color:#06b6d4;width:80px;flex-shrink:0;font-weight:700;">TC-SHOP-003</span>
+                <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#94a3b8;">Order summary shows correct totals</span>
+                <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(245,158,11,0.12);color:#f59e0b;font-weight:700;flex-shrink:0;">Med</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #1e2d45;cursor:pointer;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'">
+                <div style="width:7px;height:7px;border-radius:50%;background:#1e2d45;border:1px solid #334155;flex-shrink:0;"></div>
+                <span style="font-size:10px;font-family:monospace;color:#06b6d4;width:80px;flex-shrink:0;font-weight:700;">TC-SHOP-004</span>
+                <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#94a3b8;">Payment method selection is required</span>
+                <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(245,158,11,0.12);color:#f59e0b;font-weight:700;flex-shrink:0;">Med</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #1e2d45;cursor:pointer;" onmouseover="this.style.background='#1a2235'" onmouseout="this.style.background='transparent'">
+                <div style="width:7px;height:7px;border-radius:50%;background:#1e2d45;border:1px solid #334155;flex-shrink:0;"></div>
+                <span style="font-size:10px;font-family:monospace;color:#06b6d4;width:80px;flex-shrink:0;font-weight:700;">TC-SHOP-005</span>
+                <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#94a3b8;">Submit button disabled until required fields filled</span>
+                <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,0.12);color:#ef4444;font-weight:700;flex-shrink:0;">High</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detail pane -->
+          <div style="background:#111827;overflow:hidden;display:flex;flex-direction:column;">
+            <!-- Detail header -->
+            <div style="padding:12px 14px;border-bottom:1px solid #1e2d45;">
+              <div style="font-size:10px;font-family:monospace;color:#06b6d4;font-weight:700;margin-bottom:3px;">TC-SHOP-001</div>
+              <div style="font-size:13px;font-weight:600;line-height:1.4;margin-bottom:8px;color:#f1f5f9;">Form loads with all required fields visible</div>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(239,68,68,0.12);color:#ef4444;font-weight:600;">High</span>
+                <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:#1e2d45;color:#64748b;font-weight:600;">Happy Path</span>
+                <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:#1e2d45;color:#64748b;font-weight:600;">checkout</span>
+              </div>
+            </div>
+            <!-- Detail body -->
+            <div style="padding:12px 14px;flex:1;overflow:hidden;font-size:11px;">
+              <div style="font-size:9px;font-weight:700;color:#64748b;letter-spacing:1px;margin-bottom:5px;">STEPS</div>
+              <ol style="padding-left:14px;color:#cbd5e1;line-height:1.8;font-size:11px;">
+                <li>Navigate to /checkout</li>
+                <li>Observe the form layout</li>
+                <li>Check all field sections are present</li>
+              </ol>
+              <div style="font-size:9px;font-weight:700;color:#64748b;letter-spacing:1px;margin:10px 0 5px;">EXPECTED RESULT</div>
+              <ul style="padding-left:14px;color:#cbd5e1;line-height:1.8;font-size:11px;">
+                <li>Shipping Address, Payment Method, Order Summary sections visible</li>
+                <li>Submit button disabled until required fields filled</li>
+              </ul>
+              <div style="font-size:9px;font-weight:700;color:#64748b;letter-spacing:1px;margin:10px 0 5px;">NOTES</div>
+              <div style="width:100%;padding:6px 8px;border-radius:5px;background:#1a2235;border:1px solid #6366f1;color:#94a3b8;font-size:11px;font-style:italic;">Confirmed 2026-03-15 ✓</div>
+            </div>
+            <!-- Action bar -->
+            <div style="padding:10px 12px;border-top:1px solid #1e2d45;display:flex;gap:6px;">
+              <div style="flex:1;padding:7px;border-radius:5px;font-size:11px;font-weight:700;text-align:center;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;cursor:pointer;">✓ Pass</div>
+              <div style="flex:1;padding:7px;border-radius:5px;font-size:11px;font-weight:700;text-align:center;background:#1a2235;border:1px solid #1e2d45;color:#64748b;cursor:pointer;">✗ Fail</div>
+              <div style="flex:1;padding:7px;border-radius:5px;font-size:11px;font-weight:700;text-align:center;background:#1a2235;border:1px solid #1e2d45;color:#64748b;cursor:pointer;">→ Skip</div>
+              <div style="flex:1;padding:7px;border-radius:5px;font-size:11px;font-weight:700;text-align:center;background:#1a2235;border:1px solid #1e2d45;color:#64748b;cursor:pointer;">⊘ Block</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer bar -->
+        <div style="height:22px;background:#111827;border-top:1px solid #1e2d45;display:flex;align-items:center;gap:16px;padding:0 14px;font-size:9px;color:#475569;">
+          <span>823 test cases · 13 modules</span>
+          <span style="flex:1;text-align:right;opacity:0.5;">localStorage · no server required</span>
+        </div>
+      </div>
+    </div><!-- end browser window -->
+
+    <!-- Caption -->
+    <div style="text-align:center;margin-top:20px;font-size:12px;color:#475569;">
+      Open <span style="color:#06b6d4;font-family:monospace;">artemis-tc-list.html</span> in any browser. &nbsp;·&nbsp; No server needed. &nbsp;·&nbsp; State saves automatically in localStorage.
+    </div>
+  </div>
+  <!-- ── END TC LIST MOCKUP ── -->
+
+  <!-- Feature cards + rebuild command -->
+  <div style="display:flex;gap:32px;flex-wrap:wrap;margin-top:8px;align-items:flex-start;">
+
+    <!-- Feature grid -->
+    <div style="flex:1.4;min-width:340px;">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:0.5px;margin-bottom:14px;">WHAT YOU GET</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="font-size:20px;margin-bottom:8px;">🗂</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:5px;">Module → Submodule Tree</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Browse all TCs grouped by feature area. Expand a module to reveal submodules with their own pass bar and TC count.</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="font-size:20px;margin-bottom:8px;">✓</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:5px;">Status + Notes</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Mark each TC as Pass, Fail, Skip, or Blocked. Add tester notes. Status and notes persist in localStorage across sessions.</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:18px;">
+          <div style="font-size:20px;margin-bottom:8px;">⎙</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:5px;">Export PDF</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">One click opens the browser print dialog — formatted as a clean checklist with colored status dots and notes per TC. Available any time, even mid-run.</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid rgba(6,182,212,0.25);border-radius:12px;padding:18px;">
+          <div style="font-size:20px;margin-bottom:8px;">↓</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:5px;">Export HTML</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Downloads a standalone dark-theme snapshot with your results baked in. Share it with stakeholders — no tools required to open it.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: rebuild command + auto-rebuild note -->
+    <div style="flex:1;min-width:300px;display:flex;flex-direction:column;gap:14px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;">
+        <div style="font-size:13px;font-weight:700;color:var(--accent3);margin-bottom:10px;letter-spacing:0.5px;">BUILD THE CHECKLIST</div>
+        <pre style="font-size:12px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;overflow-x:auto;"><span style="color:var(--green)">$</span> node scripts/build-dashboard.js
+
+<span style="color:var(--green)">✓</span> artemis-tc-list.html updated
+  <span style="color:var(--muted)">823 test cases · 13 modules
+  Size: 358KB</span>
+
+<span style="color:var(--green)">$</span> open artemis-tc-list.html</pre>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;">
+        <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;">⚡ Auto-rebuild</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;">Whenever Artemis adds or approves new test cases — via <code style="color:var(--accent3);">/parse</code>, <code style="color:var(--accent3);">/explore</code>, or <code style="color:var(--accent3);">/improve</code> — it silently rebuilds the checklist and prints the updated TC count. Your checklist is always in sync with the living test library.</p>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;">
+        <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;">🤝 Works alongside Artemis Live</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;">Use <strong style="color:var(--text)">Artemis Live</strong> to watch automated runs in real time, and <strong style="color:var(--text)">TC List</strong> for manual execution sessions. Both pull from the same living test library — same TCs, same IDs, different interfaces.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TC PORTABILITY -->
+<section id="port" class="compact">
+  <p class="section-label">TC Portability</p>
+  <h2>Reuse test cases<br>across apps.</h2>
+  <p class="section-desc">When you build a second app that shares structural patterns with a tested one, <code style="color:var(--accent3);background:rgba(6,182,212,0.1);padding:2px 8px;border-radius:6px;font-size:14px;">/port</code> migrates the reusable test library in minutes — not days.</p>
+
+  <!-- Feature cards -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:40px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(16,185,129,0.35)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+      <div style="font-size:22px;margin-bottom:12px;">🗺</div>
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Module Mapping Table</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">Compares source modules to target structure using exact, fuzzy, and semantic matching. EXACT and STRONG matches are auto-suggested. PARTIAL matches require your confirmation. Nothing is written until you approve.</p>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(16,185,129,0.35)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+      <div style="font-size:22px;margin-bottom:12px;">🔍</div>
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Portability Scoring</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">Each TC is scored for app-specificity. Generic CRUD, validation, pagination, and empty state flows carry over untouched. Hardcoded URLs, product names, and org-specific terms get flagged with inline <code style="font-size:11px;color:var(--accent3);">[REVIEW:]</code> tags.</p>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(16,185,129,0.35)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
+      <div style="font-size:22px;margin-bottom:12px;">🔁</div>
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">ID Reassignment + Traceability</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">New TC IDs are assigned using the target app's prefix scheme starting from 001 (or the next available ID). A <code style="font-size:11px;color:var(--accent3);">Ported from:</code> metadata line links each TC back to its source for full traceability.</p>
+    </div>
+  </div>
+
+  <!-- Browser mockup: module mapping table -->
+  <div style="margin:48px 0 40px;position:relative;">
+    <div style="position:absolute;inset:-40px;background:radial-gradient(ellipse at 50% 60%,rgba(16,185,129,0.07) 0%,transparent 70%);pointer-events:none;z-index:0;"></div>
+    <div style="position:relative;z-index:1;border-radius:14px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.06);max-width:960px;margin:0 auto;">
+      <!-- Browser chrome -->
+      <div style="background:#1a1f2e;padding:10px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;gap:6px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#ef4444;opacity:0.8;"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:#f59e0b;opacity:0.8;"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:#10b981;opacity:0.8;"></div>
+        </div>
+        <div style="flex:1;background:#0d1117;border-radius:6px;padding:4px 12px;font-size:11px;color:#64748b;font-family:monospace;text-align:center;max-width:480px;margin:0 auto;">
+          /port shop-v1 marketplace-v2 https://staging.marketplace.dev
+        </div>
+      </div>
+      <!-- Chat output -->
+      <div style="background:#111827;padding:24px 28px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;line-height:1.8;color:#e2e8f0;">
+        <div style="color:#475569;margin-bottom:6px;">Artemis /port — Phase 1: Source Inventory</div>
+        <div style="margin-bottom:20px;">Source: <span style="color:#06b6d4;">shop-v1</span> &nbsp;·&nbsp; <span style="color:#10b981;">14 modules</span> &nbsp;·&nbsp; <span style="color:#10b981;">68 files</span> &nbsp;·&nbsp; <span style="color:#10b981;">767 TCs</span></div>
+        <div style="color:#475569;margin-bottom:10px;">Phase 3: Module Mapping Table — awaiting approval</div>
+        <div style="background:#0a0e1a;border:1px solid #1e2d45;border-radius:8px;padding:16px 20px;margin-bottom:16px;overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <thead>
+              <tr style="color:#475569;border-bottom:1px solid #1e2d45;">
+                <th style="text-align:left;padding:4px 16px 8px 0;font-weight:600;letter-spacing:0.5px;white-space:nowrap;">SOURCE MODULE</th>
+                <th style="text-align:center;padding:4px 16px 8px;font-weight:600;">TCs</th>
+                <th style="text-align:center;padding:4px 16px 8px;font-weight:600;">MATCH</th>
+                <th style="text-align:left;padding:4px 0 8px 16px;font-weight:600;">TARGET MODULE</th>
+                <th style="text-align:right;padding:4px 0 8px;font-weight:600;white-space:nowrap;">EST. PORTABLE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid rgba(30,45,69,0.6);">
+                <td style="padding:7px 16px 7px 0;color:#06b6d4;">authentication</td>
+                <td style="text-align:center;padding:7px 16px;color:#94a3b8;">13</td>
+                <td style="text-align:center;padding:7px 16px;"><span style="color:#10b981;font-weight:700;">EXACT ✓</span></td>
+                <td style="padding:7px 0 7px 16px;color:#06b6d4;">authentication</td>
+                <td style="text-align:right;color:#10b981;white-space:nowrap;">11 / 13 &nbsp;(85%)</td>
+              </tr>
+              <tr style="border-bottom:1px solid rgba(30,45,69,0.6);">
+                <td style="padding:7px 16px 7px 0;color:#06b6d4;">products</td>
+                <td style="text-align:center;padding:7px 16px;color:#94a3b8;">72</td>
+                <td style="text-align:center;padding:7px 16px;"><span style="color:#10b981;font-weight:700;">EXACT ✓</span></td>
+                <td style="padding:7px 0 7px 16px;color:#06b6d4;">products</td>
+                <td style="text-align:right;color:#10b981;white-space:nowrap;">72 / 72 (100%)</td>
+              </tr>
+              <tr style="border-bottom:1px solid rgba(30,45,69,0.6);">
+                <td style="padding:7px 16px 7px 0;color:#06b6d4;">orders</td>
+                <td style="text-align:center;padding:7px 16px;color:#94a3b8;">136</td>
+                <td style="text-align:center;padding:7px 16px;"><span style="color:#f59e0b;font-weight:700;">PARTIAL ~</span></td>
+                <td style="padding:7px 0 7px 16px;"><span style="color:#fcd34d;">order-history</span> <span style="color:#475569;font-size:10px;">(suggested)</span></td>
+                <td style="text-align:right;color:#f59e0b;white-space:nowrap;">112 / 136 (82%)</td>
+              </tr>
+              <tr style="border-bottom:1px solid rgba(30,45,69,0.6);">
+                <td style="padding:7px 16px 7px 0;color:#06b6d4;">utilities</td>
+                <td style="text-align:center;padding:7px 16px;color:#94a3b8;">146</td>
+                <td style="text-align:center;padding:7px 16px;"><span style="color:#10b981;font-weight:700;">STRONG ✓</span></td>
+                <td style="padding:7px 0 7px 16px;color:#06b6d4;">utilities</td>
+                <td style="text-align:right;color:#10b981;white-space:nowrap;">143 / 146 (98%)</td>
+              </tr>
+              <tr>
+                <td style="padding:7px 16px 7px 0;color:#475569;">payments-legacy</td>
+                <td style="text-align:center;padding:7px 16px;color:#64748b;">38</td>
+                <td style="text-align:center;padding:7px 16px;"><span style="color:#ef4444;font-weight:700;">NONE ✗</span></td>
+                <td style="padding:7px 0 7px 16px;color:#334155;">[no match found]</td>
+                <td style="text-align:right;color:#ef4444;white-space:nowrap;">0 / 38 &nbsp;(0%)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:12px 16px;color:#a5b4fc;">
+          Approve all EXACT/STRONG matches? &nbsp;<span style="color:#10b981;font-weight:700;">y</span> / modify / select individually
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:18px;font-size:12px;color:#475569;">
+      Module mapping is always presented for approval before any TC file is written. &nbsp;·&nbsp; <span style="color:#10b981;">PARTIAL matches require explicit confirmation.</span>
+    </div>
+  </div>
+
+  <!-- Before/After transformation panel -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;max-width:900px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:20px;">WHAT GETS TRANSFORMED</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:10px;letter-spacing:0.5px;">BEFORE — source TC (shop-v1)</div>
+        <pre style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:11px;line-height:1.75;overflow-x:auto;white-space:pre-wrap;margin:0;"><span style="color:#94a3b8;">### TC-AUTH-001: Successful login</span>
+<span style="color:#94a3b8;">**Priority:** High</span>
+<span style="color:#94a3b8;">**Type:** Happy Path</span>
+<span style="color:#94a3b8;">**Steps:**</span>
+<span style="color:#e2e8f0;">1. Navigate to </span><span style="color:#ef4444;">https://staging.shop-v1.dev/login</span>
+<span style="color:#e2e8f0;">2. Enter username </span><span style="color:#ef4444;">admin@shop-v1.dev</span>
+<span style="color:#e2e8f0;">3. Click "Login"</span>
+<span style="color:#94a3b8;">**Expected Result:**</span>
+<span style="color:#e2e8f0;">- Redirected to dashboard</span>
+<span style="color:#e2e8f0;">- Shows </span><span style="color:#ef4444;">"Welcome back!"</span></pre>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:10px;letter-spacing:0.5px;">AFTER — ported TC (marketplace-v2)</div>
+        <pre style="background:rgba(0,0,0,0.3);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:14px;font-size:11px;line-height:1.75;overflow-x:auto;white-space:pre-wrap;margin:0;"><span style="color:#94a3b8;">### TC-AUTH-001: Successful login</span>
+<span style="color:#94a3b8;">**Priority:** High</span>
+<span style="color:#94a3b8;">**Type:** Happy Path</span>
+<span style="color:#6366f1;">**Ported from:** TC-AUTH-001 (shop-v1)</span>
+<span style="color:#94a3b8;">**Steps:**</span>
+<span style="color:#e2e8f0;">1. Navigate to </span><span style="color:#f59e0b;">[REVIEW: was "https://staging.shop-v1.dev/login"
+   in shop-v1]</span>
+<span style="color:#e2e8f0;">2. Enter username </span><span style="color:#f59e0b;">[REVIEW: was "admin@shop-v1.dev"
+   in shop-v1]</span>
+<span style="color:#e2e8f0;">3. Click "Login"</span>
+<span style="color:#94a3b8;">**Expected Result:**</span>
+<span style="color:#e2e8f0;">- Redirected to dashboard</span>
+<span style="color:#e2e8f0;">- Shows </span><span style="color:#f59e0b;">[REVIEW: was "Welcome back!"
+   in shop-v1]</span></pre>
+      </div>
+    </div>
+    <div style="margin-top:18px;font-size:12px;color:var(--muted);line-height:1.6;">
+      <span style="color:#ef4444;">Red text</span> = app-specific content flagged by portability scorer &nbsp;·&nbsp;
+      <span style="color:#f59e0b;">Amber text</span> = transformed to <code style="font-size:11px;color:var(--accent3);">[REVIEW:]</code> in the ported TC &nbsp;·&nbsp;
+      <span style="color:#6366f1;">Indigo text</span> = new metadata added for traceability
+    </div>
+  </div>
+
+</section>
+
+<!-- ANALYSIS TOOLS -->
+<section id="analysis" class="compact">
+  <p class="section-label">Analysis Tools</p>
+  <h2>Know your coverage.<br>Target your runs.</h2>
+  <p class="section-desc">Three read-only commands that work directly from your <code style="color:var(--accent3);background:rgba(6,182,212,0.08);padding:2px 8px;border-radius:6px;font-size:14px;">test-cases/</code> folder — no browser, no execution, instant output.</p>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px;">
+
+    <!-- /matrix panel -->
+    <div style="background:#0a0e1a;border:1px solid #1e2d45;border-radius:14px;overflow:hidden;">
+      <div style="padding:14px 18px;border-bottom:1px solid #1e2d45;display:flex;align-items:center;gap:10px;">
+        <span style="font-family:'SF Mono','Fira Code',monospace;font-size:12px;font-weight:700;color:#f59e0b;">/matrix</span>
+        <span style="font-size:11px;color:#475569;">coverage gap grid</span>
+      </div>
+      <div style="padding:16px 18px;font-family:'SF Mono','Fira Code',monospace;font-size:11px;line-height:1.8;color:#94a3b8;">
+        <div style="color:#475569;margin-bottom:8px;font-size:10px;letter-spacing:0.5px;">MODULE × TEST TYPE</div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;">
+          <thead>
+            <tr style="color:#475569;border-bottom:1px solid #1e2d45;">
+              <th style="text-align:left;padding:3px 6px 5px 0;font-weight:600;">Module</th>
+              <th style="text-align:center;padding:3px 4px 5px;font-weight:600;">HP</th>
+              <th style="text-align:center;padding:3px 4px 5px;font-weight:600;">Edge</th>
+              <th style="text-align:center;padding:3px 4px 5px;font-weight:600;">Err</th>
+              <th style="text-align:center;padding:3px 4px 5px;font-weight:600;color:#ef4444;">Sec</th>
+              <th style="text-align:center;padding:3px 0 5px 4px;font-weight:600;">Perf</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(30,45,69,0.5);">
+              <td style="padding:4px 6px 4px 0;color:#06b6d4;">auth</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#334155;">✗</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(30,45,69,0.5);">
+              <td style="padding:4px 6px 4px 0;color:#06b6d4;">products</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;background:rgba(239,68,68,0.15);color:#ef4444;font-weight:700;">✗</td>
+              <td style="text-align:center;padding:4px;color:#334155;">✗</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(30,45,69,0.5);">
+              <td style="padding:4px 6px 4px 0;color:#06b6d4;">orders</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;background:rgba(239,68,68,0.15);color:#ef4444;font-weight:700;">✗</td>
+              <td style="text-align:center;padding:4px;color:#334155;">✗</td>
+            </tr>
+            <tr>
+              <td style="padding:4px 6px 4px 0;color:#06b6d4;">utilities</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#10b981;">✓</td>
+              <td style="text-align:center;padding:4px;color:#334155;">✗</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;padding:8px 10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:6px;color:#fca5a5;font-size:10px;">
+          ⚠ 2 HIGH gaps — products &amp; orders: no security TCs
+        </div>
+      </div>
+    </div>
+
+    <!-- /diff panel -->
+    <div style="background:#0a0e1a;border:1px solid #1e2d45;border-radius:14px;overflow:hidden;">
+      <div style="padding:14px 18px;border-bottom:1px solid #1e2d45;display:flex;align-items:center;gap:10px;">
+        <span style="font-family:'SF Mono','Fira Code',monospace;font-size:12px;font-weight:700;color:#f59e0b;">/diff</span>
+        <span style="font-size:11px;color:#475569;">tc library diff</span>
+      </div>
+      <div style="padding:16px 18px;font-family:'SF Mono','Fira Code',monospace;font-size:11px;line-height:1.9;color:#94a3b8;">
+        <div style="color:#475569;margin-bottom:8px;font-size:10px;letter-spacing:0.5px;">shop-v1 → marketplace-v2</div>
+        <div><span style="color:#64748b;">767 TCs</span> vs <span style="color:#64748b;">412 TCs</span></div>
+        <div style="margin:8px 0;border-top:1px solid #1e2d45;"></div>
+        <div><span style="color:#10b981;">IDENTICAL</span> &nbsp;&nbsp;&nbsp;355 TCs</div>
+        <div><span style="color:#334155;">SOURCE ONLY</span> &nbsp;355 not yet ported</div>
+        <div><span style="color:#f59e0b;">DIVERGED</span> &nbsp;&nbsp;&nbsp;&nbsp;24 (steps changed)</div>
+        <div style="margin:8px 0;border-top:1px solid #1e2d45;"></div>
+        <div><span style="color:#ef4444;">UNRESOLVED</span> &nbsp;38 [REVIEW:] tags</div>
+        <div style="margin-top:12px;padding:8px 10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:6px;color:#fcd34d;font-size:10px;">
+          → Open tc-diff-2026-03-16.md to review
+        </div>
+      </div>
+    </div>
+
+    <!-- /scope panel -->
+    <div style="background:#0a0e1a;border:1px solid #1e2d45;border-radius:14px;overflow:hidden;">
+      <div style="padding:14px 18px;border-bottom:1px solid #1e2d45;display:flex;align-items:center;gap:10px;">
+        <span style="font-family:'SF Mono','Fira Code',monospace;font-size:12px;font-weight:700;color:#f59e0b;">/scope</span>
+        <span style="font-size:11px;color:#475569;">regression targeting</span>
+      </div>
+      <div style="padding:16px 18px;font-family:'SF Mono','Fira Code',monospace;font-size:11px;line-height:1.8;color:#94a3b8;">
+        <div style="color:#475569;margin-bottom:8px;font-size:10px;letter-spacing:0.5px;">"rewrote checkout submit handler"</div>
+        <div style="color:#64748b;">Signals: orders (module) · submit (action)</div>
+        <div style="color:#64748b;">Fields: Payment Method</div>
+        <div style="color:#64748b;">767 TCs scored → 23 selected</div>
+        <div style="margin:8px 0;border-top:1px solid #1e2d45;"></div>
+        <div style="color:#e2e8f0;">TC-SHOP-001, TC-SHOP-002 <span style="color:#475569;">(baseline)</span></div>
+        <div style="color:#e2e8f0;">TC-SHOP-015–022 <span style="color:#475569;">(checkout submit)</span></div>
+        <div style="color:#e2e8f0;">TC-SHOP-045 <span style="color:#475569;">(regression)</span></div>
+        <div style="margin:8px 0;border-top:1px solid #1e2d45;"></div>
+        <div style="padding:8px 10px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:#a5b4fc;font-size:10px;">
+          /run orders https://staging.myapp.dev<br>
+          <span style="color:#475569;">~18 min · 23 TCs vs 767</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- GETTING STARTED -->
+<section id="getting-started">
+  <p class="section-label">Getting Started</p>
+  <h2>Up and running<br>in 4 steps.</h2>
+  <p class="section-desc">Artemis lives inside Claude Code. No installation, no servers, no configuration files. Just open Claude and type.</p>
+
+  <div class="steps-grid">
+    <div class="step-item">
+      <div class="step-circle">
+        ⚡
+        <span class="step-num">1</span>
+      </div>
+      <h3>Open Claude Code</h3>
+      <p>Artemis is a Claude skill — it's already available in any Claude Code session. No install needed.</p>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">
+        🚀
+        <span class="step-num">2</span>
+      </div>
+      <h3>Type /artemis</h3>
+      <p>Artemis activates and asks for your app name, URL, and credentials to set up your project.</p>
+      <span class="step-code">/artemis</span>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">
+        📋
+        <span class="step-num">3</span>
+      </div>
+      <h3>Fill app-guide.md</h3>
+      <p>Add your test data, known behaviors, modules in scope, and app-specific guidelines. Artemis reads this every run.</p>
+      <span class="step-code">app-guide.md</span>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">
+        ✅
+        <span class="step-num">4</span>
+      </div>
+      <h3>Start Testing</h3>
+      <p>Confirm the pre-run scope and Artemis runs all three agent paths — functional, exploratory, and load — in sequence.</p>
+      <span class="step-code">y → run</span>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 32px; flex-wrap: wrap; margin-top: 56px; align-items: flex-start;">
+    <div class="folder-tree">
+      <div class="folder-tree-header">Project folder generated on first run</div>
+      <div><span class="tree-root">my-app/</span></div>
+      <div>&nbsp;&nbsp;├── <span class="tree-env">.env</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">← credentials, never committed</span></div>
+      <div>&nbsp;&nbsp;├── <span class="tree-guide">app-guide.md</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">← your test data &amp; guidelines</span></div>
+      <div>&nbsp;&nbsp;├── <span class="tree-dir">test-cases/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">← living test library</span></div>
+      <div>&nbsp;&nbsp;├── <span class="tree-dir">tests/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">← generated .spec.ts files</span></div>
+      <div>&nbsp;&nbsp;├── <span class="tree-dir">load-tests/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">← k6 scripts</span></div>
+      <div>&nbsp;&nbsp;├── <span class="tree-dir">results/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">← QA + performance reports</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="tree-guide">live-status.json</span> <span class="tree-comment">← written by Artemis after every TC</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="tree-dir">bugs/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">← bug reports (read by live dashboard)</span></div>
+      <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="tree-dir">screenshots/</span> &nbsp;&nbsp;&nbsp;<span class="tree-comment">← failure evidence</span></div>
+      <div>&nbsp;&nbsp;└── <span class="tree-dir">live-server/</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span class="tree-guide">server.js</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">← live dashboard server (port 7373)</span></div>
+      <div style="margin-top:8px;"><span class="tree-root">artemis-live.html</span> &nbsp;&nbsp;<span class="tree-comment">← live dashboard UI</span></div>
+    </div>
+
+    <div style="flex: 1; min-width: 280px;">
+      <p class="section-label" style="margin-bottom: 16px;">What goes in app-guide.md</p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">🧪 Test Data</div>
+          <div style="font-size: 12.5px; color: var(--muted);">Patient names, addresses, phone numbers, date formats used in testing</div>
+        </div>
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">⚠️ Known Behaviors</div>
+          <div style="font-size: 12.5px; color: var(--muted);">Intentional quirks — "dashboard loads slowly, this is expected"</div>
+        </div>
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">📋 Modules in Scope</div>
+          <div style="font-size: 12.5px; color: var(--muted);">Which features to test, what to skip, what's blocked</div>
+        </div>
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">📝 Testing Guidelines</div>
+          <div style="font-size: 12.5px; color: var(--muted);">"Always select Outpatient after login", app-specific rules for the agent</div>
+        </div>
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">⏱ Performance Baselines</div>
+          <div style="font-size: 12.5px; color: var(--muted);">Expected response times per operation — used to flag regressions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <p class="section-label">See it in Action</p>
+  <h2>Real conversations<br>with Artemis.</h2>
+  <p class="section-desc">These are actual interaction patterns — what Artemis says, what you type, and what you get back.</p>
+
+  <div class="demo-tabs">
+    <button class="demo-tab active" onclick="showDemo('onboarding', this)">First Run Setup</button>
+    <button class="demo-tab" onclick="showDemo('run', this)">Running Tests</button>
+    <button class="demo-tab" onclick="showDemo('explore', this)">Exploring &amp; Finding Bugs</button>
+    <button class="demo-tab" onclick="showDemo('bug', this)">Analyzing a Bug</button>
+  </div>
+
+  <!-- DEMO 1: ONBOARDING -->
+  <div class="demo-panel active" id="demo-onboarding">
+    <div class="chat-window">
+      <div class="chat-titlebar">
+        <div class="chat-dot" style="background:#ef4444"></div>
+        <div class="chat-dot" style="background:#f59e0b"></div>
+        <div class="chat-dot" style="background:#10b981"></div>
+        <span class="chat-title">Claude Code — First Run</span>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">
+          <div>
+            <div class="msg-label">You</div>
+            <div class="msg-bubble">/artemis</div>
+          </div>
+          <div class="msg-avatar avatar-user">Y</div>
+        </div>
+        <div class="msg artemis">
+          <div class="msg-avatar avatar-artemis">A</div>
+          <div>
+            <div class="msg-label">Artemis</div>
+            <div class="msg-bubble">
+              Checking Playwright MCP availability…
+              <pre><span class="pass">✓</span> Playwright MCP detected — proceeding with setup.</pre>
+              No project folder found. Let's set up your app before we start testing.
+              <pre>──────────────────────────────────────
+Artemis — New App Setup
+──────────────────────────────────────
+1. App name (used for folder name):
+   e.g. "My App", "Marketplace", "Admin Portal"
+
+2. App URL:
+   e.g. https://staging.your-app.dev
+
+3. Login credentials:
+   Username:
+   Password:
+
+4. Any other credentials?
+   (API keys, additional roles, etc.)
+──────────────────────────────────────</pre>
+            </div>
+          </div>
+        </div>
+        <div class="msg user">
+          <div>
+            <div class="msg-label">You</div>
+            <div class="msg-bubble">
+              App name: My Shop<br>
+              URL: https://staging.myshop.dev<br>
+              Username: admin@myshop.dev<br>
+              Password: [stored in .env]<br>
+              No other credentials for now.
+            </div>
+          </div>
+          <div class="msg-avatar avatar-user">Y</div>
+        </div>
+        <div class="msg artemis">
+          <div class="msg-avatar avatar-artemis">A</div>
+          <div>
+            <div class="msg-label">Artemis</div>
+            <div class="msg-bubble">
+              Project folder created.
+              <pre><span class="pass">✓</span> <span class="bold">my-shop/</span> created
+<span class="pass">✓</span> .env written (credentials stored securely)
+<span class="pass">✓</span> app-guide.md created from template
+<span class="pass">✓</span> Folders: test-cases/ tests/ load-tests/ results/bugs/ results/screenshots/</pre>
+              Next step: open <span class="inline-code">my-shop/app-guide.md</span> and fill in your test data — realistic test values, known behaviors, modules in scope, testing guidelines.<br><br>
+              Ready to start testing? <span class="bold">(y</span> — or fill app-guide.md first<span class="bold">)</span>
+            </div>
+          </div>
+        </div>
+        <div class="msg user">
+          <div>
+            <div class="msg-label">You</div>
+            <div class="msg-bubble">I filled in app-guide.md. Let's go — run all tests.</div>
+          </div>
+          <div class="msg-avatar avatar-user">Y</div>
+        </div>
+        <div class="msg artemis">
+          <div class="msg-avatar avatar-artemis">A</div>
+          <div>
+            <div class="msg-label">Artemis</div>
+            <div class="msg-bubble">
+              App guide loaded. Here's what will run:
+              <pre>──────────────────────────────────────────
+Artemis QA Run — Pre-flight Check
+──────────────────────────────────────────
+App:     My Shop
+URL:     https://staging.myshop.dev
+Scope:   All modules — 185 test cases
+Paths:   ✓ Playwright Runner (TC-001–TC-185)
+         ✓ Exploratory QA
+         ✓ Load Test Planner
+Test data from app-guide.md loaded ✓
+──────────────────────────────────────────
+Proceed? (y/n)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEMO 2: RUNNING TESTS -->
+  <div class="demo-panel" id="demo-run">
+    <div class="chat-window">
+      <div class="chat-titlebar">
+        <div class="chat-dot" style="background:#ef4444"></div>
+        <div class="chat-dot" style="background:#f59e0b"></div>
+        <div class="chat-dot" style="background:#10b981"></div>
+        <span class="chat-title">Claude Code — /run command</span>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">
+          <div>
+            <div class="msg-label">You</div>
+            <div class="msg-bubble">/run Products https://staging.myshop.dev</div>
+          </div>
+          <div class="msg-avatar avatar-user">Y</div>
+        </div>
+        <div class="msg artemis">
+          <div class="msg-avatar avatar-artemis">A</div>
+          <div>
+            <div class="msg-label">Artemis</div>
+            <div class="msg-bubble">
+              <pre>──────────────────────────────────────────
+Running: Module — Products
+TCs: TC-020 to TC-047 (28 test cases)
+──────────────────────────────────────────
+
+<span class="info">[TC-020]</span> Executing: User views product listing...
+<span class="pass">✅ PASS</span> | TC-020 | Product list displays all available items
+
+<span class="info">[TC-021]</span> Executing: User adds item to cart...
+<span class="pass">✅ PASS</span> | TC-021 | Item added — toast "Added to cart" shown
+         Product visible in cart icon with correct count ✓
+
+<span class="info">[TC-022]</span> Executing: Add to cart rejects out-of-stock item...
+<span class="fail">❌ FAIL</span> | TC-022 | Out-of-stock item added without validation
+         Expected: Validation error "This item is currently unavailable"
+         Actual:   Item added to cart — stock count went negative
+         URL:      /products/add-to-cart
+         Screenshot: screenshots/tc-022-fail.png
+         Console:  TypeError at cart.js:142
+
+<span class="info">[TC-023]</span> Executing: User filters product list by category...
+<span class="pass">✅ PASS</span> | TC-023 | Filter applied, results narrowed correctly
+
+<span class="warn">⋯ 24 more tests running...</span></pre>
+            </div>
+          </div>
+        </div>
+        <div class="msg artemis">
+          <div class="msg-avatar avatar-artemis">A</div>
+          <div>
+            <div class="msg-label">Artemis</div>
+            <div class="msg-bubble">
+              Module complete.
+              <pre>──────────────────────────────────────────
+Results — Products
+──────────────────────────────────────────
+<span class="pass">✅ PASS</span>    25
+<span class="fail">❌ FAIL</span>     2   (TC-022, TC-035)
+<span class="warn">🚫 BLOCKED</span>  1   (TC-041 — CAPTCHA)
+<span class="dim">⏭ SKIP</span>     0
+──────────────────────────────────────────
+Report: my-shop/results/qa-results-2026-03-15.md
+Spec:   my-shop/tests/products.spec.ts</pre>
+              2 failures need bug reports. Want me to run <span class="inline-code">/bug</span> on each, or continue to exploratory testing?
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEMO 3: EXPLORE -->
+  <div class="demo-panel" id="demo-explore">
+    <div class="chat-window">
+      <div class="chat-titlebar">
+        <div class="chat-dot" style="background:#ef4444"></div>
+        <div class="chat-dot" style="background:#f59e0b"></div>
+        <div class="chat-dot" style="background:#10b981"></div>
+        <span class="chat-title">Claude Code — /explore command</span>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">
+          <div>
+            <div class="msg-label">You</div>
+            <div class="msg-bubble">/explore https://staging.myshop.dev</div>
+          </div>
+          <div class="msg-avatar avatar-user">Y</div>
+        </div>
+        <div class="msg artemis">
+          <div class="msg-avatar avatar-artemis">A</div>
+          <div>
+            <div class="msg-label">Artemis</div>
+            <div class="msg-bubble">
+              Building sitemap...
+              <pre><span class="bold">Pages discovered (14):</span>
+<span class="pass">TESTED</span>   /login, /dashboard, /products, /products/search
+<span class="pass">TESTED</span>   /cart, /cart/checkout
+<span class="warn">PARTIAL</span>  /products/detail (3 of 8 paths tested)
+<span class="fail">UNTESTED</span> /orders/history, /orders/export
+<span class="fail">UNTESTED</span> /reports/monthly, /admin/settings
+<span class="fail">UNTESTED</span> /settings/profile, /settings/roles</pre>
+              Now probing untested pages and interactions...
+            </div>
+          </div>
+        </div>
+        <div class="msg artemis">
+          <div class="msg-avatar avatar-artemis">A</div>
+          <div>
+            <div class="msg-label">Artemis</div>
+            <div class="msg-bubble">
+              Exploration complete. Here's what I found:
+              <pre><span class="bold">🐛 Bugs Discovered (4)</span>
+
+<span class="fail">HIGH</span>   /orders/export
+       Export button active with 0 orders selected.
+       Click triggers download with empty file — no error shown.
+
+<span class="fail">HIGH</span>   /products/search
+       Search field accepts &lt;script&gt;alert(1)&lt;/script&gt;
+       Tag rendered in results — potential XSS.
+
+<span class="warn">MEDIUM</span> /reports/monthly
+       Date filter accepts Feb 30, submits without error.
+       Returns 0 results silently.
+
+<span class="warn">MEDIUM</span> /settings/profile
+       Profile photo upload accepts .exe files.
+       No file type validation on frontend.
+
+<span class="bold">📋 New Test Cases Generated (12)</span>
+TC-NEW-186 to TC-NEW-197 (pending your approval)</pre>
+              Shall I add these 12 TCs to <span class="inline-code">test-cases/my-shop-test-cases.md</span>? I can also create bug reports for the 4 findings.
+            </div>
+          </div>
+        </div>
+        <div class="msg user">
+          <div>
+            <div class="msg-label">You</div>
+            <div class="msg-bubble">Yes add the TCs and create bug reports for the HIGH ones.</div>
+          </div>
+          <div class="msg-avatar avatar-user">Y</div>
+        </div>
+        <div class="msg artemis">
+          <div class="msg-avatar avatar-artemis">A</div>
+          <div>
+            <div class="msg-label">Artemis</div>
+            <div class="msg-bubble">
+              <pre><span class="pass">✓</span> 12 TCs added → TC-186 to TC-197
+<span class="pass">✓</span> BUG-20260315-001 → my-shop/results/bugs/
+  Orders export — empty export with no validation
+<span class="pass">✓</span> BUG-20260315-002 → my-shop/results/bugs/
+  Products search — XSS not escaped
+<span class="pass">✓</span> Index table updated in test-cases file</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEMO 4: BUG ANALYSIS -->
+  <div class="demo-panel" id="demo-bug">
+    <div class="chat-window">
+      <div class="chat-titlebar">
+        <div class="chat-dot" style="background:#ef4444"></div>
+        <div class="chat-dot" style="background:#f59e0b"></div>
+        <div class="chat-dot" style="background:#10b981"></div>
+        <span class="chat-title">Claude Code — /bug command with Jam.dev</span>
+      </div>
+      <div class="chat-body">
+        <div class="msg user">
+          <div>
+            <div class="msg-label">You</div>
+            <div class="msg-bubble">/bug https://jam.dev/c/abc-123-xyz — TC-022 failed, out-of-stock item added to cart</div>
+          </div>
+          <div class="msg-avatar avatar-user">Y</div>
+        </div>
+        <div class="msg artemis">
+          <div class="msg-avatar avatar-artemis">A</div>
+          <div>
+            <div class="msg-label">Artemis</div>
+            <div class="msg-bubble">
+              Pulling Jam recording data...
+              <pre><span class="bold">Console Errors:</span>
+<span class="fail">TypeError:</span> Cannot read property 'stock' of undefined
+  at validateStock (cart.js:142)
+  at handleAddToCart (cart.js:89)
+
+<span class="bold">Network Requests:</span>
+POST /api/cart/add → <span class="warn">200 OK</span> (item added — stock went negative)
+No 4xx/5xx errors detected.
+
+<span class="bold">User Event Timeline:</span>
+[00:02] Navigated to /products/detail
+[00:04] Clicked "Add to Cart" — item out of stock
+[00:04] POST /api/cart/add fired → 200 {}
+[00:05] Toast "Added to cart" shown, no stock check performed</pre>
+            </div>
+          </div>
+        </div>
+        <div class="msg artemis">
+          <div class="msg-avatar avatar-artemis">A</div>
+          <div>
+            <div class="msg-label">Artemis</div>
+            <div class="msg-bubble">
+              Bug report generated.
+              <pre><span class="bold">BUG-20260315-001</span>
+Title:     Cart — Out-of-stock item added without stock validation
+Severity:  <span class="fail">Critical</span>
+Layer:     API Bug + UI Bug
+Rate:      Always reproducible
+
+Root Cause Hypothesis:
+  POST /api/cart/add returns 200 without checking stock level —
+  no server-side inventory validation before add.
+  Frontend TypeError at cart.js:142 prevents the stock check
+  function from running before the request is sent.
+
+Fix Direction:
+  1. Add server-side stock check → return 400 if stock &lt; 1
+  2. Fix TypeError at cart.js:142 — stockData.stock is undefined
+
+Regression TC: TC-NEW-198 added to test-cases file</pre>
+              Comment added to Jam recording. Bug saved to <span class="inline-code">my-shop/results/bugs/BUG-20260315-001.md</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install">
+  <p class="section-label">Installation</p>
+  <h2>Share Artemis with your team</h2>
+  <p style="color:var(--muted);max-width:600px;margin-top:16px;font-size:15px;">Artemis lives inside Claude Code as a skill — a folder in <code style="font-family:monospace;font-size:13px;color:var(--accent3);">~/.claude/skills/</code>. Share only the skill folder, not project data.</p>
+
+  <div class="install-grid">
+    <!-- Option 1: ZIP -->
+    <div class="install-card recommended">
+      <div class="install-badge">Easiest</div>
+      <h3>Zip &amp; Share</h3>
+      <p>Zip the skill folder and send it. Your colleague unzips it in the right place and they're ready to go.</p>
+      <ul class="install-steps">
+        <li>
+          <div class="install-step-num">1</div>
+          <div>
+            <div>Zip the Artemis skill folder</div>
+            <code>cd ~/.claude/skills
+zip -r artemis.zip artemis/</code>
+          </div>
+        </li>
+        <li>
+          <div class="install-step-num">2</div>
+          <div>Share <code style="display:inline;padding:1px 5px;">artemis.zip</code> via Slack, email, or drive</div>
+        </li>
+        <li>
+          <div class="install-step-num">3</div>
+          <div>
+            <div>Colleague unzips into their skills folder</div>
+            <code>cd ~/.claude/skills
+unzip artemis.zip</code>
+          </div>
+        </li>
+        <li>
+          <div class="install-step-num">4</div>
+          <div>Restart Claude Code — Artemis appears automatically</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Option 2: GitHub -->
+    <div class="install-card">
+      <div class="install-badge" style="color:var(--accent3);background:rgba(6,182,212,0.12);">Best for Teams</div>
+      <h3>GitHub Clone</h3>
+      <p>Host Artemis in a private repo. Team members clone it directly. Push updates once — everyone stays current.</p>
+      <ul class="install-steps">
+        <li>
+          <div class="install-step-num">1</div>
+          <div>Push <code style="display:inline;padding:1px 5px;">~/.claude/skills/artemis/</code> to a private GitHub repo</div>
+        </li>
+        <li>
+          <div class="install-step-num">2</div>
+          <div>
+            <div>Colleague clones directly into their skills folder</div>
+            <code>cd ~/.claude/skills
+git clone git@github.com:yourorg/artemis.git</code>
+          </div>
+        </li>
+        <li>
+          <div class="install-step-num">3</div>
+          <div>Restart Claude Code — Artemis is ready</div>
+        </li>
+        <li>
+          <div class="install-step-num">4</div>
+          <div>
+            <div>To update later</div>
+            <code>cd ~/.claude/skills/artemis
+git pull</code>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- What to share -->
+  <div class="share-note">
+    <h4>What to share vs. what to keep private</h4>
+    <table class="share-table">
+      <tr>
+        <th>Path</th>
+        <th>Share?</th>
+        <th>Why</th>
+      </tr>
+      <tr>
+        <td>~/.claude/skills/artemis/</td>
+        <td class="share-yes">✓ Yes</td>
+        <td>This is Artemis itself — SKILL.md, all reference docs, all templates</td>
+      </tr>
+      <tr>
+        <td>[app-name]/.env</td>
+        <td class="share-no">✗ No</td>
+        <td>Contains credentials — each person creates their own</td>
+      </tr>
+      <tr>
+        <td>[app-name]/test-cases/</td>
+        <td class="share-yes">✓ Yes (optional)</td>
+        <td>Living test library — share if you want the team to use the same TCs</td>
+      </tr>
+      <tr>
+        <td>[app-name]/results/</td>
+        <td class="share-yes">✓ Yes (optional)</td>
+        <td>QA reports — share for visibility, keep private if sensitive</td>
+      </tr>
+      <tr>
+        <td>[app-name]/app-guide.md</td>
+        <td class="share-yes">✓ Yes</td>
+        <td>App-specific guidelines — safe to share, no credentials inside</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Prerequisite -->
+  <div style="margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px;">Prerequisites</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--green);"></div>
+        <span><strong>Claude Code</strong> — desktop app or CLI</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--green);"></div>
+        <span><strong>Playwright MCP</strong> — for browser automation (<code style="font-size:11px;color:var(--accent3);">{"command":"npx","args":["@playwright/mcp@latest"]}</code> in mcp.json)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--orange);"></div>
+        <span><strong>Jam.dev account</strong> — optional, for bug enrichment</span>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <p class="section-label">Ready</p>
+  <h2>One command.<br>Full QA pipeline.</h2>
+  <div class="cta-cmd">/artemis</div>
+  <p class="cta-note">Artemis sets up your project, confirms scope, and runs all three agent paths — functional, exploratory, and load — before producing a combined report.</p>
+</section>
+
+<footer>
+  Artemis v2.1 — AI QA Testing Agent &nbsp;·&nbsp; Built with Claude &nbsp;·&nbsp; 7 agents · 12 commands · 13 reference docs · Live Dashboard &nbsp;·&nbsp; artemis-orchestrator.html
+</footer>
+
+<script>
+  function showDemo(id, btn) {
+    document.querySelectorAll('.demo-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('demo-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function toggleTheme() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const next = isLight ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    document.getElementById('themeIcon').textContent = next === 'light' ? '🌙' : '☀️';
+    document.getElementById('themeLabel').textContent = next === 'light' ? 'Dark' : 'Light';
+    localStorage.setItem('artemis-theme', next);
+  }
+
+  // Restore saved preference
+  (function() {
+    const saved = localStorage.getItem('artemis-theme');
+    if (saved === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.getElementById('themeIcon').textContent = '🌙';
+      document.getElementById('themeLabel').textContent = 'Dark';
+    }
+  })();
+</script>
+
+</body>
+</html>
