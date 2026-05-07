@@ -16,9 +16,37 @@ through setup automatically — no commands to memorize, no docs to read first.
 | `vault-starter/` | Second Brain vault scaffold |
 | `project-starter/` | Playwright project scaffold |
 
+## Getting Started
+
+### Step 1 — Install prerequisites
+
+Run the setup script — it installs Node.js, Python 3, and Git automatically if they're not already present:
+
+**Mac/Linux:**
+```bash
+bash setup-prereqs.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+powershell -ExecutionPolicy Bypass -File setup-prereqs.ps1
+```
+
+Install these two manually (not automated):
+
+| Tool | Why | Download |
+|------|-----|----------|
+| **Claude Code** | The AI that runs everything | https://claude.ai/code |
+| **Obsidian** *(recommended)* | Browse the vault knowledge base | https://obsidian.md |
+
+### Step 2 — Open in Claude Code
+
+Open this folder in Claude Code. Claude detects your install state and guides you through the rest of setup automatically — Playwright, credentials, vault, MCP.
+
 ## Requirements
 
 - Node.js 18+
+- Python 3.10+
 - Claude Code (`npm i -g @anthropic-ai/claude-code` or the Claude desktop app)
 - Playwright (installed automatically by the setup wizard)
 
@@ -29,6 +57,19 @@ and the vault as a separate git repo cloned into `./vault/` (gitignored in the p
 Teammates clone the project repo, open it in Claude Code, and Claude walks them through
 entering their own credentials. A session-start sync check reminds everyone to pull before
 testing.
+
+## AI Subagents
+
+Artemis includes 4 specialized subagents that Claude spawns automatically for deep analysis tasks. Each runs in isolation — no browser, pure file analysis — and writes its output to a structured location.
+
+| Subagent | Triggered by | What it does |
+|----------|-------------|--------------|
+| **artemis-bug-analyst** | `/bug`, `/improve`, `/scope` | Reproduces failures, classifies the root cause layer (UI / API / Data / State / Timing), scores test suites on 5 axes, and ranks regression targets by relevance. Writes structured bug reports to `results/bugs/`. |
+| **artemis-parser** | `/parse`, `/ingest` | Converts any input — DOCX, markdown, prose, tables, checklists — into structured Artemis test cases. Normalizes TC IDs, detects edge cases, and outputs directly to the TC library. |
+| **artemis-auditor** | `/audit` | Runs a 4-pass project health check: project folder cleanliness, vault file freshness, memory file quality, and token budget usage. Writes a report to `results/audits/`. |
+| **artemis-documenter** | `/document` | Reads vault feature files and explore screenshots to generate BA/SA-style developer reference documents (`.md` + `.docx`). Includes field matrices, conditional logic tables, navigation steps, and known quirks. No browser needed. |
+
+---
 
 ## 3-Step Testing Pipeline
 

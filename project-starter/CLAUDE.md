@@ -6,16 +6,38 @@
 
 ```bash
 SETUP_NEEDED=0
-node --version >/dev/null 2>&1 || { echo "  [1] Install Node.js (LTS) — https://nodejs.org"; SETUP_NEEDED=1; }
+
+# Detect OS to show the correct prereqs command
+if [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "linux"* ]]; then
+  PREREQS_CMD="bash setup-prereqs.sh"
+elif [[ "$OS" == "Windows_NT" ]] || command -v powershell.exe >/dev/null 2>&1; then
+  PREREQS_CMD="powershell -ExecutionPolicy Bypass -File setup-prereqs.ps1"
+else
+  PREREQS_CMD=""  # Unknown — will ask user below
+fi
+
+node --version >/dev/null 2>&1 || { echo "  [1] Node.js not found"; SETUP_NEEDED=1; NODE_MISSING=1; }
 [ ! -f "node_modules/.bin/playwright" ] && { echo "  [2] Run: npm install && npx playwright install"; SETUP_NEEDED=1; }
-python3 --version >/dev/null 2>&1 || python --version >/dev/null 2>&1 || { echo "  [3] Install Python — https://python.org (needed for /document)"; SETUP_NEEDED=1; }
+python3 --version >/dev/null 2>&1 || python --version >/dev/null 2>&1 || { echo "  [3] Python not found (needed for /document)"; SETUP_NEEDED=1; PY_MISSING=1; }
 [ ! -f ".env" ] && { echo "  [4] Copy .env.example → .env and fill in APP_URL, APP_USERNAME, APP_PASSWORD"; SETUP_NEEDED=1; }
-[ ! -f ".mcp.json" ] && { echo "  [5] Run: bash setup-mcp.sh (Mac/Linux) or powershell -ExecutionPolicy Bypass -File setup-mcp.ps1 (Windows)"; SETUP_NEEDED=1; }
+[ ! -f ".mcp.json" ] && { echo "  [5] Run setup-mcp.sh (Mac/Linux) or setup-mcp.ps1 (Windows) to generate .mcp.json"; SETUP_NEEDED=1; }
 VAULT_CHECK=$(grep context_vault .artemis-project 2>/dev/null | cut -d= -f2 | sed "s|~|$HOME|")
 [ -n "$VAULT_CHECK" ] && [ ! -d "$VAULT_CHECK" ] && { echo "  [6] Vault not found at '$VAULT_CHECK' — check .artemis-project"; SETUP_NEEDED=1; }
-[ "$SETUP_NEEDED" -eq 1 ] && echo "
+
+if [ "$SETUP_NEEDED" -eq 1 ]; then
+  if [ "${NODE_MISSING:-0}" -eq 1 ] || [ "${PY_MISSING:-0}" -eq 1 ]; then
+    if [ -n "$PREREQS_CMD" ]; then
+      echo "  → To install missing tools automatically, run: $PREREQS_CMD"
+    else
+      echo "  → To install missing tools, run setup-prereqs.sh (Mac/Linux) or setup-prereqs.ps1 (Windows)"
+      echo "     Ask the user: 'What OS are you on? (Mac / Windows / Linux)' to confirm which command to use."
+    fi
+  fi
+  echo "
 🛠  First-time setup required. Complete the steps above, then restart Claude Code.
-   See SETUP.md or ONBOARDING.md for detailed instructions." && return 0 2>/dev/null || exit 0
+   See SETUP.md or ONBOARDING.md for detailed instructions."
+  return 0 2>/dev/null || exit 0
+fi
 ```
 
 If all checks pass → no output, continue to Step 0.
