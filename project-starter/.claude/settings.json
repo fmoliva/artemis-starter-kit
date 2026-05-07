@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/detect-server-errors.sh\"'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

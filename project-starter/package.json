@@ -1,0 +1,22 @@
+{
+  "name": "artemis-project",
+  "version": "1.0.0",
+  "description": "Playwright test project powered by Artemis",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "setup-db": "node scripts/setup-db.js",
+    "migrate-tcs": "node scripts/migrate-tcs.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.43.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.0.0",
+    "dotenv": "^16.0.0"
+  }
+}
