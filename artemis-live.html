@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artemis Live</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2230;--surface3:#21293a;
+  --border:#21293a;--border2:#2d3748;
+  --accent:#6366f1;--accent2:#8b5cf6;--accent3:#38bdf8;
+  --green:#10b981;--red:#ef4444;--orange:#f59e0b;--yellow:#fbbf24;
+  --muted:#8b949e;--text:#e6edf3;--text2:#c9d1d9;
+  --critical-bg:rgba(239,68,68,.15);--critical-c:#ef4444;
+  --high-bg:rgba(249,115,22,.15);--high-c:#f97316;
+  --medium-bg:rgba(245,158,11,.15);--medium-c:#f59e0b;
+  --low-bg:rgba(148,163,184,.1);--low-c:#94a3b8;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* ─── Header ────────────────────────────────────────────────────────────── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;height:50px;flex-shrink:0;
+  background:rgba(13,17,23,.97);border-bottom:1px solid var(--border);
+  position:relative;z-index:10;
+}
+.logo{font-size:13px;font-weight:900;letter-spacing:2px;
+  background:linear-gradient(135deg,var(--accent),var(--accent3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.breadcrumb{font-size:12px;color:var(--muted);margin-left:14px;display:flex;align-items:center;gap:6px}
+.breadcrumb span{color:var(--text2)}
+.breadcrumb .sep{color:var(--border2)}
+.header-right{display:flex;align-items:center;gap:10px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;
+  padding:3px 9px;border-radius:12px;letter-spacing:.5px}
+.badge-running{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.badge-running .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.2s infinite}
+.badge-idle{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.badge-complete{background:rgba(56,189,248,.1);color:var(--accent3);border:1px solid rgba(56,189,248,.3)}
+.badge-live{background:rgba(99,102,241,.1);color:var(--accent);border:1px solid rgba(99,102,241,.3)}
+.timer{font-size:13px;font-weight:700;color:var(--text2);font-variant-numeric:tabular-nums;min-width:40px;text-align:right}
+.btn{padding:5px 12px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface2);color:var(--muted);
+  transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{color:var(--text);border-color:var(--accent)}
+.btn-accent{background:rgba(99,102,241,.12);border-color:var(--accent);color:var(--accent)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ─── Main grid ─────────────────────────────────────────────────────────── */
+.main{
+  display:grid;
+  grid-template-columns:300px 280px 280px 280px 1fr;
+  gap:0;flex:1;overflow:hidden;
+}
+.col{
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  overflow:hidden;min-width:0;
+}
+.col:last-child{border-right:none}
+.col-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px 8px;flex-shrink:0;
+  border-bottom:1px solid var(--border);
+}
+.col-title{font-size:10px;font-weight:800;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.count-badge{font-size:10px;font-weight:700;background:var(--surface3);color:var(--muted);
+  padding:2px 7px;border-radius:10px;min-width:22px;text-align:center}
+.count-badge.has-items{background:rgba(99,102,241,.15);color:var(--accent)}
+.col-body{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+
+/* ─── Progress column (bordered-panel layout) ───────────────────────────── */
+.prog-section{padding:10px 11px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
+.prog-exec-label{font-size:8px;color:var(--muted);letter-spacing:.8px;margin-bottom:3px;text-transform:uppercase}
+.prog-exec-id{font-size:10px;font-weight:700;color:var(--accent3);font-family:monospace;margin-bottom:2px}
+.prog-exec-title{font-size:10px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prog-bar-section{padding:8px 11px;border-bottom:1px solid var(--border);flex-shrink:0}
+.prog-bar{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;margin-bottom:4px}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3));border-radius:2px;transition:width .5s ease}
+.prog-bar-lbl{font-size:10px;color:var(--muted);text-align:right}
+.prog-counts{display:flex;gap:4px;padding:6px 11px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.prog-pill{display:flex;align-items:center;gap:4px;padding:3px 7px;border-radius:20px;background:var(--surface2);font-size:10px;font-weight:700;flex:1;min-width:48px}
+.prog-pill.pass{color:var(--green)}
+.prog-pill.fail{color:var(--red)}
+.prog-pill.left{color:var(--accent)}
+.prog-recent-label{padding:5px 11px 3px;font-size:8px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;flex-shrink:0}
+.prog-results{flex:1;overflow-y:auto}
+.prog-result-row{display:flex;align-items:center;gap:6px;padding:4px 11px;cursor:pointer}
+.prog-result-row:hover,.prog-result-row.highlighted{background:var(--surface2)}
+.prog-result-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.prog-result-id{font-size:9px;font-family:monospace;color:var(--accent3);width:80px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prog-result-title{font-size:10px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prog-result-status{font-size:9px;font-weight:700;flex-shrink:0}
+
+/* ─── Bug / Observation cards ───────────────────────────────────────────── */
+.card{background:var(--surface2);border-radius:7px;padding:10px 12px;cursor:pointer;transition:border-color .15s;border:1px solid transparent}
+.card:hover{border-color:var(--border2)}
+.card.expanded{border-color:var(--accent)}
+.card-meta{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.card-id{font-size:10px;font-family:monospace;font-weight:700}
+.card-id.bug{color:var(--red)}
+.card-id.obs{color:var(--accent2)}
+.card-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.4}
+.card-sub{font-size:10px;color:var(--muted)}
+.card-detail{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--text2);line-height:1.6}
+.card.expanded .card-detail{display:block}
+.sev,.obs-status{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0}
+.sev-Critical,.sev-critical{background:var(--critical-bg);color:var(--critical-c)}
+.sev-High,.sev-high{background:var(--high-bg);color:var(--high-c)}
+.sev-Medium,.sev-medium{background:var(--medium-bg);color:var(--medium-c)}
+.sev-Low,.sev-low,.sev-Unknown,.sev-unknown{background:var(--low-bg);color:var(--low-c)}
+.obs-OPEN{background:rgba(99,102,241,.15);color:var(--accent)}
+.obs-RAISED{background:var(--medium-bg);color:var(--medium-c)}
+.obs-TC-ADDED{background:rgba(16,185,129,.15);color:var(--green)}
+.obs-RESOLVED{background:rgba(148,163,184,.1);color:var(--muted)}
+
+/* ─── Discoveries ───────────────────────────────────────────────────────── */
+.disc-card{background:var(--surface2);border-radius:7px;padding:11px 12px;border:1px solid transparent}
+.disc-card:hover{border-color:var(--border2)}
+.disc-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:5px;line-height:1.4}
+.disc-body{font-size:11px;color:var(--muted);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ─── Test Cases column ─────────────────────────────────────────────────── */
+.tc-search{width:100%;padding:7px 10px;border-radius:5px;background:var(--surface3);border:1px solid var(--border2);color:var(--text);font-size:11px;outline:none;margin-bottom:4px}
+.tc-search::placeholder{color:var(--muted)}
+.tc-search:focus{border-color:var(--accent)}
+.module-group{margin-bottom:2px}
+.module-row{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);user-select:none}
+.module-row:hover{background:var(--surface2)}
+.module-arrow{font-size:9px;color:var(--muted);width:10px;flex-shrink:0;transition:transform .15s}
+.module-arrow.open{transform:rotate(90deg)}
+.module-name{flex:1}
+.module-count{font-size:10px;font-weight:700;background:var(--surface3);color:var(--muted);padding:2px 7px;border-radius:10px}
+.module-count.all-pass{background:rgba(16,185,129,.12);color:var(--green)}
+.module-count.has-fail{background:rgba(239,68,68,.1);color:var(--red)}
+.tc-list{padding-left:16px;display:none}
+.tc-list.open{display:block}
+.sub-label{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;padding:4px 8px 2px}
+.tc-row{display:flex;align-items:center;gap:7px;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer}
+.tc-row:hover{background:var(--surface2)}
+.tc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--border2)}
+.tc-dot.running{background:var(--accent);border-color:var(--accent);animation:pulse 1s infinite}
+.tc-dot.pass{background:var(--green);border-color:var(--green)}
+.tc-dot.fail{background:var(--red);border-color:var(--red)}
+.tc-dot.pending{background:transparent;border-color:var(--border2)}
+.tc-id{font-family:monospace;font-size:10px;color:var(--accent3);width:88px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc-title-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+
+/* ─── Category badges ───────────────────────────────────────────────────── */
+.cat-badge{font-size:8px;font-weight:800;padding:1px 5px;border-radius:3px;flex-shrink:0;letter-spacing:.2px;white-space:nowrap}
+.cat-happy{background:rgba(16,185,129,.15);color:var(--green)}
+.cat-edge{background:rgba(245,158,11,.15);color:var(--orange)}
+.cat-security{background:rgba(239,68,68,.15);color:var(--red)}
+.cat-validation{background:rgba(56,189,248,.15);color:var(--accent3)}
+.cat-error{background:rgba(249,115,22,.15);color:var(--high-c)}
+.cat-boundary{background:rgba(148,163,184,.1);color:var(--muted)}
+
+/* ─── TC row expandable ─────────────────────────────────────────────────── */
+.tc-row:hover{background:var(--surface3)}
+.tc-row.tc-expanded{background:var(--surface3);border-radius:4px 4px 0 0}
+.tc-detail{
+  display:none;
+  margin:0 0 6px 0;padding:7px 10px 8px 28px;
+  border-left:2px solid var(--border2);
+  background:var(--surface2);
+  border-radius:0 0 5px 5px;
+  font-size:10px;color:var(--text2);line-height:1.7
+}
+.tc-detail.open{display:block}
+.tc-detail-step{display:flex;gap:6px;padding:1px 0}
+.tc-detail-num{color:var(--muted);flex-shrink:0;width:16px;font-family:monospace}
+.tc-detail-expected{margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+
+/* ─── Empty state ───────────────────────────────────────────────────────── */
+.empty{padding:28px 16px;text-align:center;color:var(--muted);font-size:11px;line-height:1.7}
+.empty-hint{font-size:10px;margin-top:4px;color:var(--border2)}
+
+/* ─── Footer ────────────────────────────────────────────────────────────── */
+footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;height:30px;flex-shrink:0;
+  background:rgba(13,17,23,.97);border-top:1px solid var(--border);
+  font-size:10px;color:var(--muted);
+}
+.footer-mode{display:flex;align-items:center;gap:12px}
+.mode-badge{display:flex;align-items:center;gap:5px}
+.mode-dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+.mode-dot.disconnected{background:var(--muted);animation:none}
+.sync-indicator{display:flex;align-items:center;gap:5px}
+
+/* ─── Detail Modal ──────────────────────────────────────────────────────── */
+#modalOverlay{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;
+}
+#modalBox{
+  background:var(--surface);border:1px solid rgba(99,102,241,.3);
+  border-radius:14px;width:min(660px,95vw);max-height:82vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 32px 80px rgba(0,0,0,.8);overflow:hidden;
+}
+#modalHeader{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+#modalBody{overflow-y:auto;padding:20px 22px;font-size:13px;color:var(--text2);line-height:1.6}
+.modal-title{margin:0 0 12px;font-size:16px;color:var(--text);font-weight:700;line-height:1.4}
+.modal-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.modal-row{display:flex;align-items:baseline;gap:8px;font-size:12px;margin-bottom:6px}
+.modal-row-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;white-space:nowrap;width:90px;flex-shrink:0}
+.modal-row-val{color:var(--text2)}
+.modal-section{margin-top:14px}
+.modal-section-label{font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.modal-prose{font-size:12px;color:var(--text2);line-height:1.7;margin:0}
+.modal-olist{padding-left:18px;margin:0;font-size:12px;color:var(--text2);line-height:1.8}
+.modal-olist li{padding-left:2px}
+.modal-ulist{padding-left:18px;margin:0;font-size:12px;color:var(--text2);line-height:1.8}
+.modal-code{
+  display:block;font-family:monospace;font-size:11px;color:var(--accent3);
+  background:#070b12;padding:10px 13px;border-radius:6px;border:1px solid var(--border);
+  white-space:pre-wrap;word-break:break-all;margin:0;line-height:1.6
+}
+.modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px}
+.modal-close:hover{color:var(--text)}
+.modal-type-pill{font-size:9px;font-weight:800;letter-spacing:1.2px;padding:3px 8px;border-radius:4px}
+.modal-id{font-size:13px;font-family:monospace;font-weight:700;color:var(--text2)}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header>
+  <div style="display:flex;align-items:center;gap:0">
+    <span class="logo">ARTEMIS LIVE</span>
+    <div class="breadcrumb" id="breadcrumb">
+      <span>QCHIS</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="runBadge" class="badge badge-idle"><span class="dot" style="display:none"></span><span id="runState">IDLE</span></span>
+    <span class="badge badge-live">● LIVE</span>
+    <div id="timerEl" class="timer">—</div>
+    <a href="/playwright-report/index.html" target="_blank" class="btn">⬡ View Full Report</a>
+    <a href="artemis-tc-list.html" target="_blank" class="btn btn-accent">☑ Manual QA</a>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- 1: Test Progress -->
+  <div class="col">
+    <div class="col-head">
+      <span class="col-title">Test Progress</span>
+      <span id="pctBadge" class="count-badge">—</span>
+    </div>
+    <div class="col-body" id="progressCol" style="padding:0;gap:0;overflow-y:hidden">
+      <div class="empty">Idle — no run in progress</div>
+    </div>
+  </div>
+
+  <!-- 2: Bugs Found -->
+  <div class="col">
+    <div class="col-head">
+      <span class="col-title">Bugs Found</span>
+      <span id="bugsCount" class="count-badge">0</span>
+    </div>
+    <div class="col-body" id="bugsCol">
+      <div class="empty">No bugs reported<div class="empty-hint">Click any card to view full details</div></div>
+    </div>
+  </div>
+
+  <!-- 3: Observations -->
+  <div class="col">
+    <div class="col-head">
+      <span class="col-title">Observations</span>
+      <span id="obsCount" class="count-badge">0</span>
+    </div>
+    <div class="col-body" id="obsCol">
+      <div class="empty">No observations yet</div>
+    </div>
+  </div>
+
+  <!-- 4: Discoveries -->
+  <div class="col">
+    <div class="col-head">
+      <span class="col-title">Discoveries</span>
+      <span id="discCount" class="count-badge">0</span>
+    </div>
+    <div class="col-body" id="discCol">
+      <div class="empty">No discoveries yet</div>
+    </div>
+  </div>
+
+  <!-- 5: Test Cases -->
+  <div class="col" style="border-right:none">
+    <div class="col-head">
+      <span class="col-title">Test Cases</span>
+      <span id="tcCount" class="count-badge">0</span>
+    </div>
+    <div class="col-body" style="padding:8px">
+      <input class="tc-search" id="tcSearch" type="text" placeholder="Search TC ID or title…">
+      <div id="tcTree"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-mode">
+    <div class="mode-badge">
+      <div class="mode-dot" id="modeDot"></div>
+      <span id="modeLabel">Mode: SSE (connecting…)</span>
+    </div>
+    <span>Server: http://localhost:7373</span>
+  </div>
+  <div class="sync-indicator">
+    <span id="syncLabel">○ live-status.json</span>
+  </div>
+</footer>
+
+<!-- ── Detail Modal ───────────────────────────────────────────────────────── -->
+<div id="modalOverlay" onclick="closeModal(event)">
+  <div id="modalBox">
+    <div id="modalHeader">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="modalTypePill" class="modal-type-pill">—</span>
+        <span id="modalId" class="modal-id">—</span>
+      </div>
+      <button class="modal-close" onclick="closeModal(null)">&times;</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:7373';
+
+// ── State ──────────────────────────────────────────────────────────────────
+let state = {
+  runState: 'idle', runId: null, startedAt: null,
+  counts: { total:0, pass:0, fail:0, skip:0, remaining:0 },
+  currentTc: null, recentResults: [],
+};
+let bugs        = [];
+let observations = [];
+let discoveries  = [];
+let tcData       = { modules: [] };
+let tcResults    = {};  // { tcId: 'pass'|'fail'|'running' }
+let timerInterval = null;
+let searchTerm  = '';
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function sev(s) {
+  const v = (s||'Unknown').charAt(0).toUpperCase() + (s||'Unknown').slice(1).toLowerCase();
+  const cls = ['Critical','High','Medium','Low'].includes(v) ? v : 'Unknown';
+  return `<span class="sev sev-${cls}">${esc(s||'?')}</span>`;
+}
+
+function catBadge(cat) {
+  if (!cat) return '';
+  const c = (cat||'').toLowerCase().replace(/[\s_]+/g,'-');
+  const map = {
+    'happy-path':     {cls:'cat-happy',      label:'✓ Happy'},
+    'happy':          {cls:'cat-happy',      label:'✓ Happy'},
+    'edge-case':      {cls:'cat-edge',       label:'⚡ Edge'},
+    'edge':           {cls:'cat-edge',       label:'⚡ Edge'},
+    'security':       {cls:'cat-security',   label:'🔒 Sec'},
+    'validation':     {cls:'cat-validation', label:'◎ Valid'},
+    'error-handling': {cls:'cat-error',      label:'✗ Error'},
+    'error':          {cls:'cat-error',      label:'✗ Error'},
+    'boundary':       {cls:'cat-boundary',   label:'◉ Bound'},
+  };
+  const m = map[c] || {cls:'cat-boundary', label:cat};
+  return `<span class="cat-badge ${m.cls}">${m.label}</span>`;
+}
+
+// ── Modal helpers ──────────────────────────────────────────────────────────
+function mRow(label, val) {
+  if (!val && val !== 0) return '';
+  return `<div class="modal-row"><span class="modal-row-label">${label}</span><span class="modal-row-val">${val}</span></div>`;
+}
+function mSection(label, body) {
+  if (!body) return '';
+  return `<div class="modal-section"><div class="modal-section-label">${label}</div>${body}</div>`;
+}
+function mProse(txt) { return `<p class="modal-prose">${esc(txt)}</p>`; }
+function mCode(txt)  { return `<code class="modal-code">${esc(txt)}</code>`; }
+function mOlist(arr) { return `<ol class="modal-olist">${arr.map(s=>`<li>${esc(String(s))}</li>`).join('')}</ol>`; }
+function mUlist(arr) { return `<ul class="modal-ulist">${arr.map(s=>`<li>${esc(String(s))}</li>`).join('')}</ul>`; }
+
+function sevColor(s) {
+  return {CRITICAL:'ef4444',HIGH:'f59e0b',MEDIUM:'eab308',LOW:'64748b'}[(s||'').toUpperCase()] || '64748b';
+}
+function statColor(s) {
+  return {OPEN:'6366f1',RAISED:'06b6d4','TC-ADDED':'10b981',RESOLVED:'475569'}[(s||'').toUpperCase().replace(/\s+/g,'-')] || '6366f1';
+}
+
+function buildBugModal(b) {
+  const sv = sevColor(b.severity); const st = statColor(b.status);
+  let h = `<h3 class="modal-title">${esc(b.title||'')}</h3>`;
+  h += `<div class="modal-badges">
+    <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(${sv.match(/../g).map(x=>parseInt(x,16)).join(',')},0.15);color:#${sv};">${esc(b.severity||'?')}</span>
+    <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(99,102,241,0.12);color:#6366f1;">${esc(b.status||'OPEN')}</span>
+  </div>`;
+  h += mRow('Source TC', b.tc ? `<code style="font-size:11px;color:var(--accent3)">${esc(b.tc)}</code>` : null);
+  h += mRow('Module',    b.module);
+  h += mRow('Date',      b.date||b.createdAt);
+  if (b.endpoint) h += mRow('Endpoint', `<code style="font-size:11px;background:#0a0e1a;padding:1px 5px;border-radius:3px;color:var(--accent3)">${esc(b.endpoint)}</code>`);
+  if (b.httpStatus) h += mRow('HTTP Status', `<span style="color:var(--red);font-weight:700">${esc(String(b.httpStatus))}</span>`);
+  if (b.description)     h += mSection('DESCRIPTION',        mProse(b.description));
+  const steps = b.stepsToRepro || b.steps_to_repro || b.steps;
+  const stepsArr = Array.isArray(steps) ? steps : (steps ? [steps] : null);
+  if (stepsArr?.length)  h += mSection('STEPS TO REPRODUCE', mOlist(stepsArr));
+  if (b.expected)        h += mSection('EXPECTED',            mProse(b.expected));
+  if (b.actual)          h += mSection('ACTUAL',              mProse(b.actual));
+  if (b.networkEvidence||b.network_evidence) h += mSection('NETWORK EVIDENCE', mCode(b.networkEvidence||b.network_evidence));
+  if (b.consoleError||b.console_error)       h += mSection('CONSOLE ERROR',     mCode(b.consoleError||b.console_error));
+  if (b.impact)          h += mSection('IMPACT',              mProse(b.impact));
+  if (b.possibleCause||b.possible_cause)     h += mSection('POSSIBLE CAUSE',    mProse(b.possibleCause||b.possible_cause));
+  if (b.suggestedFix||b.suggested_fix)       h += mSection('SUGGESTED FIX',     mProse(b.suggestedFix||b.suggested_fix));
+  return h;
+}
+
+function buildObsModal(o) {
+  const st = statColor(o.status);
+  let h = `<h3 class="modal-title">${esc(o.title||'')}</h3>`;
+  const il = (o.impactLevel||o.impact_level||o.severity||'Low');
+  const ilv = sevColor(il.toUpperCase());
+  h += `<div class="modal-badges">
+    <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(${ilv.match(/../g).map(x=>parseInt(x,16)).join(',')},0.15);color:#${ilv};">${esc(il)}</span>
+    <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(${st.match(/../g).map(x=>parseInt(x,16)).join(',')},0.15);color:#${st};">${esc(o.status||'OPEN')}</span>
+  </div>`;
+  h += mRow('Source TC', o.tc ? `<code style="font-size:11px;color:var(--accent3)">${esc(o.tc)}</code>` : null);
+  h += mRow('Module',    o.module);
+  h += mRow('Date',      o.date||o.createdAt);
+  if (o.description||o.note) h += mSection('OBSERVATION', mProse(o.description||o.note));
+  if (o.suggestion)           h += mSection('SUGGESTION',  mProse(o.suggestion));
+  return h;
+}
+
+function buildTcModal(tc) {
+  const r = tcResults[tc.id];
+  const stColors = { PASS:'#10b981', FAIL:'#ef4444', RUNNING:'#6366f1', SKIP:'#64748b' };
+  const stColor = stColors[(r||'').toUpperCase()] || '#64748b';
+
+  let h = `<h3 class="modal-title">${esc(tc.title||'')}</h3>`;
+  h += `<div class="modal-badges">`;
+  if (r) h += `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:${stColor}22;color:${stColor}">${r.toUpperCase()}</span>`;
+  const tcCat = tc.category||tc.type||tc.tags;
+  if (tcCat) h += catBadge(tcCat);
+  h += `</div>`;
+  h += mRow('TC ID',      `<code style="font-size:11px;color:var(--accent3)">${esc(tc.id||'')}</code>`);
+  h += mRow('Module',     tc.module||tc.submodule);
+  h += mRow('Submodule',  tc.submodule && tc.module && tc.submodule !== tc.module ? tc.submodule : null);
+  h += mRow('Priority',   tc.priority);
+
+  if (tc.description) h += mSection('DESCRIPTION', mProse(tc.description));
+
+  const pre = tc.preconditions || tc.pre_conditions;
+  const preArr = Array.isArray(pre) ? pre : (pre ? [pre] : null);
+  if (preArr?.length) h += mSection('PRECONDITIONS', mUlist(preArr));
+
+  const steps = tc.steps;
+  const stepsArr = Array.isArray(steps) ? steps : (steps ? (() => { try { return JSON.parse(steps); } catch { return [steps]; } })() : null);
+  if (stepsArr?.length) h += mSection('STEPS', mOlist(stepsArr));
+
+  const expRaw = tc.expected_result || tc.expectedResult;
+  const expArr = Array.isArray(expRaw) ? expRaw
+    : (expRaw ? (() => { try { const p = JSON.parse(expRaw); return Array.isArray(p) ? p : [String(expRaw)]; } catch { return [String(expRaw)]; } })() : null);
+  if (expArr?.length) h += mSection('EXPECTED RESULT', expArr.length === 1 ? mProse(expArr[0]) : mUlist(expArr));
+
+  return h;
+}
+
+function buildDiscModal(d) {
+  let h = `<h3 class="modal-title">${esc(d.title||'')}</h3>`;
+  const body = d.discovery||d.fix||d.body||d.description||'';
+  if (body)           h += mSection('WHAT WAS DISCOVERED', mProse(body));
+  if (d.impact)       h += mSection('TEST IMPACT',          mProse(d.impact));
+  if (d.tcGenerated)  h += mSection('TC GENERATED',         `<p style="margin:0;font-size:12px;font-family:monospace;color:var(--green);background:#070b12;padding:8px 12px;border-radius:6px;border:1px solid var(--border)">${esc(d.tcGenerated)}</p>`);
+  return h;
+}
+
+function openModal(type, data) {
+  const overlay = $('modalOverlay');
+  const box     = $('modalBox');
+  const pill    = $('modalTypePill');
+  const idEl    = $('modalId');
+  const body    = $('modalBody');
+
+  const configs = {
+    bug:  { label:'BUG',         bg:'rgba(239,68,68,0.15)',  color:'#ef4444', border:'rgba(239,68,68,0.3)',  id: data.id },
+    obs:  { label:'OBSERVATION',  bg:'rgba(139,92,246,0.15)', color:'#a78bfa', border:'rgba(139,92,246,0.3)', id: data.id },
+    disc: { label:'DISCOVERY',    bg:'rgba(234,179,8,0.12)',  color:'#fbbf24', border:'rgba(234,179,8,0.2)',  id: 'DISCOVERY' },
+    tc:   { label:'TEST CASE',    bg:'rgba(99,102,241,0.15)', color:'#818cf8', border:'rgba(99,102,241,0.3)', id: data.id },
+  };
+  const cfg = configs[type] || configs.bug;
+
+  pill.style.cssText = `background:${cfg.bg};color:${cfg.color};font-size:9px;font-weight:800;letter-spacing:1.2px;padding:3px 8px;border-radius:4px`;
+  pill.textContent = cfg.label;
+  idEl.textContent = cfg.id || '—';
+  $('modalHeader').style.borderBottomColor = cfg.border;
+
+  if (type === 'bug')  body.innerHTML = buildBugModal(data);
+  if (type === 'obs')  body.innerHTML = buildObsModal(data);
+  if (type === 'disc') body.innerHTML = buildDiscModal(data);
+  if (type === 'tc')   body.innerHTML = buildTcModal(data);
+
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e && e.target !== $('modalOverlay')) return;
+  $('modalOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(null); });
+
+function elapsed(startIso) {
+  if (!startIso) return '—';
+  const sec = Math.floor((Date.now() - new Date(startIso)) / 1000);
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ── Timer ──────────────────────────────────────────────────────────────────
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (state.runState === 'running' && state.startedAt) {
+      $('timerEl').textContent = elapsed(state.startedAt);
+    }
+  }, 1000);
+}
+startTimer();
+
+// ── Run Badge + Breadcrumb ─────────────────────────────────────────────────
+function updateHeader() {
+  const badge = $('runBadge');
+  const dot   = badge.querySelector('.dot');
+  const label = $('runState');
+  if (state.runState === 'running') {
+    badge.className = 'badge badge-running';
+    dot.style.display = 'inline-block';
+    label.textContent = 'RUNNING';
+  } else if (state.runState === 'complete' || state.runState === 'completed') {
+    badge.className = 'badge badge-complete';
+    dot.style.display = 'none';
+    label.textContent = 'COMPLETE';
+  } else {
+    badge.className = 'badge badge-idle';
+    dot.style.display = 'none';
+    label.textContent = 'IDLE';
+  }
+
+  // Breadcrumb from current TC
+  const bc = $('breadcrumb');
+  if (state.currentTc) {
+    const id = typeof state.currentTc === 'object' ? state.currentTc.id : state.currentTc;
+    const parts = id.split('-').slice(1, -1); // e.g. TC-TRI-PS-001 → [TRI, PS]
+    if (parts.length) {
+      bc.innerHTML = parts.map(p => `<span>${esc(p)}</span>`).join('<span class="sep">›</span>') + '<span class="sep">›</span><span style="color:var(--accent)">' + esc(id) + '</span>';
+    }
+  } else {
+    bc.innerHTML = '<span>QCHIS</span>';
+  }
+}
+
+// ── Progress Column ────────────────────────────────────────────────────────
+function renderProgress() {
+  const c = state.counts;
+  const total = c.total || 0;
+  const done  = Math.min((c.pass||0) + (c.fail||0) + (c.skip||0), total);
+  const pct   = total ? Math.round((done / total) * 100) : 0;
+
+  $('pctBadge').textContent = total ? pct + '%' : '—';
+  $('pctBadge').className = 'count-badge' + (total ? ' has-items' : '');
+
+  if (state.runState === 'idle' && !total) {
+    $('progressCol').innerHTML = '<div class="empty">Idle — no run in progress</div>';
+    return;
+  }
+
+  const curId    = state.currentTc ? (typeof state.currentTc === 'object' ? state.currentTc.id : state.currentTc) : '';
+  const curTitle = state.currentTc && typeof state.currentTc === 'object' ? (state.currentTc.title || '') : '';
+
+  const results = (state.recentResults || []).slice().reverse().slice(0, 30);
+  const resHtml = results.length ? results.map((r, i) => {
+    const st  = (r.status||'').toUpperCase();
+    const id  = r.id || r.tcId || '';
+    const tt  = esc(r.title || r.tcTitle || '');
+    const dot = st === 'PASS' ? 'var(--green)' : st === 'FAIL' ? 'var(--red)' : 'var(--muted)';
+    const stc = st === 'PASS' ? 'var(--green)' : st === 'FAIL' ? 'var(--red)' : 'var(--muted)';
+    return `<div class="prog-result-row${i===0?' highlighted':''}" onclick="openTcModal('${esc(id).replace(/'/g,"\\'")}')">
+      <div class="prog-result-dot" style="background:${dot}"></div>
+      <div class="prog-result-id">${esc(id)}</div>
+      <div class="prog-result-title">${tt}</div>
+      <div class="prog-result-status" style="color:${stc}">${st}</div>
+    </div>`;
+  }).join('') : '<div style="font-size:11px;color:var(--muted);padding:8px 11px">No results yet</div>';
+
+  $('progressCol').innerHTML = `
+    <div class="prog-section">
+      <div class="prog-exec-label">Currently Executing</div>
+      <div class="prog-exec-id">${curId ? esc(curId) : '—'}</div>
+      <div class="prog-exec-title">${esc(curTitle)}</div>
+    </div>
+    <div class="prog-bar-section">
+      <div class="prog-bar"><div class="prog-bar-fill" style="width:${pct}%"></div></div>
+      <div class="prog-bar-lbl">${done} / ${total} tests</div>
+    </div>
+    <div class="prog-counts">
+      <div class="prog-pill pass">✓ <span>${c.pass||0}</span> PASS</div>
+      <div class="prog-pill fail">✗ <span>${c.fail||0}</span> FAIL</div>
+      <div class="prog-pill left">○ <span>${c.remaining||0}</span> LEFT</div>
+    </div>
+    <div class="prog-recent-label">Recent Results</div>
+    <div class="prog-results">${resHtml}</div>
+  `;
+}
+
+// ── Bugs Column ────────────────────────────────────────────────────────────
+function renderBugs() {
+  const open = bugs.filter(b => (b.status||'').toLowerCase() === 'open');
+  $('bugsCount').textContent = open.length;
+  $('bugsCount').className   = 'count-badge' + (open.length ? ' has-items' : '');
+
+  if (!open.length) {
+    $('bugsCol').innerHTML = '<div class="empty">No bugs reported<div class="empty-hint">Click any card to view full details</div></div>';
+    return;
+  }
+
+  $('bugsCol').innerHTML = open.slice(0,30).map((b,i) => `
+    <div class="card" onclick="openModal('bug', bugs.filter(x=>(x.status||'').toLowerCase()==='open')[${i}])">
+      <div class="card-meta">
+        <span class="card-id bug">${esc(b.id||'')}</span>
+        ${b.tc ? `<span style="font-size:10px;color:var(--muted);font-family:monospace">· ${esc(b.tc)}</span>` : ''}
+        ${sev(b.severity)}
+      </div>
+      <div class="card-title">${esc(b.title||'')}</div>
+      <div class="card-sub" style="display:flex;align-items:center;gap:6px">
+        ${b.endpoint ? `<code style="font-size:9px;color:var(--muted);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.endpoint.slice(0,50))}</code>` : (b.module ? `<span style="font-size:10px;color:var(--muted)">${esc(b.module)}</span>` : '')}
+        ${b.httpStatus ? `<span style="font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;background:rgba(239,68,68,.12);color:var(--red);flex-shrink:0">${esc(b.httpStatus)}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Observations Column ────────────────────────────────────────────────────
+function renderObservations() {
+  $('obsCount').textContent = observations.length;
+  $('obsCount').className   = 'count-badge' + (observations.length ? ' has-items' : '');
+
+  if (!observations.length) {
+    $('obsCol').innerHTML = '<div class="empty">No observations yet</div>';
+    return;
+  }
+
+  $('obsCol').innerHTML = observations.slice(0,30).map((o,i) => {
+    const st = (o.status||'OPEN').toUpperCase().replace(/\s+/g,'-');
+    const il = (o.impactLevel||o.impact_level||o.severity||'Low');
+    const ilCap = il.charAt(0).toUpperCase() + il.slice(1).toLowerCase();
+    return `
+    <div class="card" onclick="openModal('obs', observations[${i}])">
+      <div class="card-meta">
+        <span class="card-id obs">${esc(o.id||'')}</span>
+        <span class="obs-status obs-${st}">${esc(o.status||'OPEN')}</span>
+        <span class="sev sev-${ilCap}">${esc(ilCap)}</span>
+      </div>
+      <div class="card-title">${esc(o.title||'')}</div>
+      ${o.module ? `<div class="card-sub">${esc(o.module)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Discoveries Column ─────────────────────────────────────────────────────
+function renderDiscoveries() {
+  $('discCount').textContent = discoveries.length;
+  $('discCount').className   = 'count-badge' + (discoveries.length ? ' has-items' : '');
+
+  if (!discoveries.length) {
+    $('discCol').innerHTML = '<div class="empty">No discoveries yet</div>';
+    return;
+  }
+
+  $('discCol').innerHTML = discoveries.slice(0,30).map((d,i) => `
+    <div class="disc-card" style="cursor:pointer" onclick="openModal('disc', discoveries[${i}])">
+      <div class="disc-title">${esc(d.title||'')}</div>
+      <div class="disc-body">${esc(d.discovery||d.fix||d.body||d.description||'')}</div>
+    </div>
+  `).join('');
+}
+
+// ── Test Cases Column ──────────────────────────────────────────────────────
+function renderTcTree() {
+  const { modules } = tcData;
+  let total = 0;
+  modules.forEach(m => m.submodules.forEach(s => total += s.tcs.length));
+  $('tcCount').textContent = total;
+  $('tcCount').className   = 'count-badge' + (total ? ' has-items' : '');
+
+  const q = searchTerm.toLowerCase();
+  const tree = $('tcTree');
+
+  if (!modules.length) {
+    tree.innerHTML = '<div class="empty">No test cases loaded</div>';
+    return;
+  }
+
+  // Build open-state map (preserve toggles)
+  const openMap = {};
+  tree.querySelectorAll('.module-group').forEach(g => {
+    const slug = g.dataset.slug;
+    if (slug) openMap[slug] = g.querySelector('.tc-list')?.classList.contains('open');
+  });
+
+  let html = '';
+  for (const mod of modules) {
+    let modPass = 0, modFail = 0, modTotal = 0;
+    let tcRows = '';
+    for (const sub of mod.submodules) {
+      let subRows = '';
+      for (const tc of sub.tcs) {
+        if (q && !tc.id.toLowerCase().includes(q) && !tc.title.toLowerCase().includes(q)) continue;
+        const r = tcResults[tc.id];
+        const dotCls = r === 'running' ? 'running' : r === 'PASS' ? 'pass' : r === 'FAIL' ? 'fail' : 'pending';
+        const safeId = tc.id.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        subRows += `<div class="tc-row" onclick="openTcModal('${safeId}')">
+          <div class="tc-dot ${dotCls}" title="${r||'pending'}"></div>
+          <div class="tc-id">${esc(tc.id)}</div>
+          <div class="tc-title-text" title="${esc(tc.title)}">${esc(tc.title)}</div>
+          ${catBadge(tc.category||tc.type||tc.tags)}
+        </div>`;
+        modTotal++;
+        if (r === 'PASS') modPass++;
+        if (r === 'FAIL') modFail++;
+      }
+      if (subRows) {
+        tcRows += `<div class="sub-label">${esc(sub.label)}</div>${subRows}`;
+      }
+    }
+    if (!tcRows && q) continue;
+
+    const countCls = modFail > 0 ? 'has-fail' : modPass === modTotal && modTotal > 0 ? 'all-pass' : '';
+    const countTxt = modTotal > 0 ? `${modPass}/${modTotal}` : String(modTotal);
+    const isOpen   = openMap[mod.slug] ?? (q.length > 0);
+    const arrowCls = isOpen ? 'module-arrow open' : 'module-arrow';
+    const listCls  = isOpen ? 'tc-list open' : 'tc-list';
+
+    html += `<div class="module-group" data-slug="${esc(mod.slug)}">
+      <div class="module-row" onclick="toggleModule(this)">
+        <span class="${arrowCls}">▶</span>
+        <span class="module-name">${esc(mod.label)}</span>
+        <span class="module-count ${countCls}">${countTxt}</span>
+      </div>
+      <div class="${listCls}">${tcRows}</div>
+    </div>`;
+  }
+
+  tree.innerHTML = html || '<div class="empty">No matches</div>';
+}
+
+function toggleModule(rowEl) {
+  const arrow = rowEl.querySelector('.module-arrow');
+  const list  = rowEl.nextElementSibling;
+  arrow.classList.toggle('open');
+  list.classList.toggle('open');
+}
+
+function findTc(id) {
+  for (const mod of tcData.modules) {
+    for (const sub of mod.submodules) {
+      const tc = sub.tcs.find(t => t.id === id);
+      if (tc) return { ...tc, module: mod.label, submodule: sub.label };
+    }
+  }
+  return null;
+}
+
+function openTcModal(id) {
+  const tc = findTc(id);
+  if (!tc) return;
+  openModal('tc', tc);
+}
+
+// ── Sync Indicator ─────────────────────────────────────────────────────────
+function flashSync() {
+  const el = $('syncLabel');
+  el.style.color = 'var(--green)';
+  el.textContent = '● live-status.json';
+  setTimeout(() => {
+    el.style.color = '';
+    el.textContent = '○ live-status.json';
+  }, 600);
+}
+
+// ── Data Fetching ──────────────────────────────────────────────────────────
+async function fetchStatus() {
+  try {
+    const s = await fetch(API + '/api/status').then(r => r.json());
+    state = { ...state, ...s };
+    updateHeader();
+    renderProgress();
+    if (s.runState === 'running') flashSync();
+    if (!timerInterval && s.runState === 'running') startTimer();
+    if (s.runState !== 'running') $('timerEl').textContent = s.completedAt ? elapsed(s.startedAt) : '—';
+  } catch { /* offline */ }
+}
+
+async function fetchBugs() {
+  try {
+    const b = await fetch(API + '/api/bugs').then(r => r.json());
+    if (Array.isArray(b)) { bugs = b; renderBugs(); }
+  } catch {}
+}
+
+async function fetchObs() {
+  try {
+    const o = await fetch(API + '/api/observations').then(r => r.json());
+    if (Array.isArray(o)) { observations = o; renderObservations(); }
+  } catch {}
+}
+
+async function fetchFeatures() {
+  try {
+    const f = await fetch(API + '/api/features').then(r => r.json());
+    if (Array.isArray(f)) { discoveries = f; renderDiscoveries(); }
+  } catch {}
+}
+
+async function fetchTcs() {
+  try {
+    const d = await fetch(API + '/api/testcases').then(r => r.json());
+    if (d && d.modules) { tcData = d; renderTcTree(); }
+  } catch {}
+}
+
+async function fetchTcResults() {
+  try {
+    const r = await fetch(API + '/api/results/by-tc').then(r => r.json());
+    if (r && typeof r === 'object') {
+      tcResults = {};
+      for (const [id, entry] of Object.entries(r)) {
+        tcResults[id] = entry.status || entry;
+      }
+      renderTcTree();
+    }
+  } catch {}
+}
+
+async function fetchAll() {
+  await Promise.allSettled([fetchStatus(), fetchBugs(), fetchObs(), fetchFeatures(), fetchTcs(), fetchTcResults()]);
+}
+
+// ── SSE ────────────────────────────────────────────────────────────────────
+function connectSSE() {
+  const es = new EventSource(API + '/api/events');
+
+  es.addEventListener('connected', () => {
+    $('modeDot').className = 'mode-dot';
+    $('modeLabel').textContent = 'Mode: SSE (live)';
+  });
+
+  es.addEventListener('status', e => {
+    try { const s = JSON.parse(e.data); state = { ...state, ...s }; updateHeader(); renderProgress(); flashSync(); } catch {}
+  });
+
+  es.addEventListener('bugs', e => {
+    try { const b = JSON.parse(e.data); if (Array.isArray(b)) { bugs = b; renderBugs(); } } catch {}
+  });
+
+  es.addEventListener('observations', e => {
+    try { const o = JSON.parse(e.data); if (Array.isArray(o)) { observations = o; renderObservations(); } } catch {}
+  });
+
+  es.addEventListener('features', e => {
+    try { const f = JSON.parse(e.data); if (Array.isArray(f)) { discoveries = f; renderDiscoveries(); } } catch {}
+  });
+
+  es.addEventListener('result', e => {
+    try {
+      const r = JSON.parse(e.data);
+      const id = r.tcId || r.tc_id || r.id;
+      if (id) {
+        tcResults[id] = r.status;
+        if (state.currentTc && (typeof state.currentTc === 'object' ? state.currentTc.id : state.currentTc) !== id) {
+          // previous TC done — reset running dot
+        }
+        renderTcTree();
+      }
+      const entry = { id, title: r.tcTitle || r.title || id, status: r.status };
+      if (!state.recentResults) state.recentResults = [];
+      state.recentResults.unshift(entry);
+      if (state.recentResults.length > 50) state.recentResults.pop();
+      renderProgress();
+      flashSync();
+    } catch {}
+  });
+
+  es.addEventListener('refresh', () => fetchAll());
+
+  es.onerror = () => {
+    $('modeDot').className = 'mode-dot disconnected';
+    $('modeLabel').textContent = 'Mode: SSE (reconnecting…)';
+    es.close();
+    setTimeout(connectSSE, 3000);
+  };
+}
+
+// ── Search ─────────────────────────────────────────────────────────────────
+$('tcSearch').addEventListener('input', e => {
+  searchTerm = e.target.value.trim();
+  renderTcTree();
+});
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+fetchAll();
+connectSSE();
+setInterval(fetchAll, 10000);
+</script>
+</body>
+</html>
