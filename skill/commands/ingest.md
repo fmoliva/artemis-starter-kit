@@ -32,8 +32,8 @@ If `$ARGUMENTS` names a specific file: process only that file and skip to Step 2
 ## Step 2 — Read and classify each file
 
 Read the file fully. Identify the module from:
-1. Filename pattern (e.g. `session-2026-04-28-triage-registration.md` → triage)
-2. Section headers (e.g. `## Triage` or `## Patient Registration`)
+1. Filename pattern (e.g. `session-2026-04-28-checkout-flow.md` → checkout)
+2. Section headers (e.g. `## Checkout` or `## Account Settings`)
 3. Feature names or URLs mentioned in the content
 
 Classify each section using these signals:
@@ -151,6 +151,6 @@ Types: session | feature | bug | explore | req
 ```
 
 Examples:
-- `raw/session-2026-04-28-triage-registration.md`
-- `raw/feature-2026-04-28-break-the-glass.md`
-- `raw/bug-2026-04-28-concurrent-registration.md`
+- `raw/session-2026-04-28-checkout-flow.md`
+- `raw/feature-2026-04-28-saved-payment-methods.md`
+- `raw/bug-2026-04-28-concurrent-cart-update.md`

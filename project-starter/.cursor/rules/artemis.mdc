@@ -10,7 +10,7 @@ Read `AGENTS.md` for the full methodology. The rules below are always enforced.
 ## Before writing any test file
 
 - Read `vault/_app-overview.md` — app identity, module URLs, auth selectors
-- Read `vault/_test-data.md` — test users, patients, credentials
+- Read `vault/_test-data.md` — test users, records, credentials
 - Read `vault/[feature].md` if it exists — feature-specific context
 - Read `test-cases/[feature].md` if it exists — existing coverage
 

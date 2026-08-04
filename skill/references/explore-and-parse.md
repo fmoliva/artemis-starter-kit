@@ -6,6 +6,39 @@
 
 Autonomous discovery without a pre-written script. Uses **Playwright MCP** (Phase 1 tool).
 
+### Pre-Phase 0 — Tech stack detection (only when `tech_stack=unknown`)
+
+Read `.artemis-project`. If line 2 is `tech_stack=unknown` (or the line is absent):
+
+1. Navigate to the target URL and take an initial `browser_snapshot`
+2. Inspect the DOM for framework signals:
+   - `ng-version` attribute on `<html>` or `<body>` → **Angular**
+   - `data-reactroot` or `/_next/` path in source → **React / Next.js**
+   - `data-v-` attributes or `__vue__` in window → **Vue**
+   - None of the above → **html**
+3. If Angular detected, check for PrimeNG:
+   - Any of `p-dialog`, `p-multiselect`, `p-table`, `p-button` in DOM → add `+primeng`
+4. If detection is unambiguous → set `DETECTED_STACK` and proceed automatically.
+   If ambiguous → ask the user once: "I detected [X] — is that correct?"
+5. Update `.artemis-project` line 2: `tech_stack=<detected>`
+6. Run conditional scaffolding (same as `/init` Step 3a) — copy templates on the fly:
+   ```bash
+   SKILL_DIR=~/.claude/skills/artemis
+   APP=$(cat .artemis-project | head -1)
+   if [[ "$DETECTED_STACK" == angular* ]]; then
+     cp "$SKILL_DIR/templates/tests/fixtures/angular-stable.ts"  "$APP/tests/fixtures/"
+     cp "$SKILL_DIR/templates/tests/helpers/navigation.ts"       "$APP/tests/helpers/"
+   fi
+   if [[ "$DETECTED_STACK" == "angular+primeng" ]]; then
+     cp "$SKILL_DIR/templates/tests/helpers/primeng.ts"          "$APP/tests/helpers/"
+   fi
+   ```
+7. Print: `"🔍 Detected stack: [stack] — helpers scaffolded. Continuing with explore..."`
+
+If no `.artemis-project` found: skip this step entirely.
+
+---
+
 ### Pre-Phase 1 — Load vault context
 
 Before navigating, resolve the vault and check for a feature file matching the area being explored:
@@ -49,7 +82,7 @@ If the loaded vault file has `subtype: modal` or `subtype: tab-section`:
    - Navigate to page
    - Capture: URL path, page title, visible inputs (labels), buttons (labels, max 10),
      table headers, tabs, dropdown options
-   - Take one **screenshot** per module-level page (not snapshot — screenshot is a PNG, no YAML)
+   - Take one **screenshot** per module-level page (not snapshot — screenshot is a PNG, no YAML) — save to `${APP}/results/screenshots/explore/`
    - Note any modals, alerts, or overlays that appear
 4. **Build module map:** Group pages by nav hierarchy → module → submodule
 
@@ -107,6 +140,32 @@ Write to `results/explorations/explore-[scope]-[YYYY-MM-DD].json`:
 `results/explorations/`) to partition into per-module JSON files in `results/modules/`.
 Each file should be 3-8KB. Never read the exploration JSON directly for test generation.
 
+### Spelling Harvest (end of Phase 1 — forms, modals, and pages with stable text labels)
+
+After completing Phase 1 discovery for any form, modal, or page:
+
+1. Collect all **stable UI label strings** that appear on the page: section headings, tab names,
+   dropdown options, column headers, scale option labels, modal row names.
+   **Exclude:** record data, dynamic values, timestamps, IDs, or any text that changes per-record.
+
+2. Check `tests/ui-baselines/spelling-reference.json` for an existing key covering this feature area.
+   - **Key exists:** verify current approved values still match live app; update any that changed.
+   - **No key yet:** create a new key using the naming convention `[module]FormSections`, `[modal]Names`,
+     `[feature]Labels`, etc. Populate with the confirmed live strings.
+
+3. If `tests/ui-behavior/[module]-ui-behavior.spec.ts` exists, scan for `assertSpelling` calls that
+   reference empty arrays `[]` in the matching key — fill them now while live strings are in context.
+
+4. Print harvest summary before closing the browser:
+   ```
+   📝  Spelling harvest — [feature]
+     Updated keys: [list or "none"]
+     New keys:     [list or "none"]
+     Skipped:      [dynamic fields skipped]
+   ```
+
+---
+
 ### Post-Explore Handoff (Required before CLI phase)
 
 1. Call `mcp__playwright__browser_close` — stops snapshot accumulation in context
@@ -116,6 +175,12 @@ Each file should be 3-8KB. Never read the exploration JSON directly for test gen
    - Form fields per module (labels only, no YAML)
    - Key workflow sequences (verb sequences, e.g. "search → select → admit")
 4. All subsequent phases load from `results/modules/*.json` — never re-read MCP snapshot content from context
+5. **If this project uses a vault, update `${VAULT}/_pipeline.md`** (MANDATORY — do this before reporting to the user):
+   - Set **Explored** = today's date for every feature whose selectors were confirmed
+   - Set **Selectors** = `✓` if all key selectors resolved; `partial` if any remain unconfirmed
+   - If a spec was also patched during this session (TODOs cleared), set **Last Updated** = today
+
+   Missing this step causes pipeline drift — the tracker must reflect actual explore coverage.
 
 **Compact Summary Format:**
 ```markdown

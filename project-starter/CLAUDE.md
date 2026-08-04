@@ -113,8 +113,14 @@ RAW_PENDING=$(ls "${VAULT}/raw/"*.md 2>/dev/null | grep -v "_archive" | wc -l | 
 │   └── results/              ← bug reports, explorations, screenshots
 └── .claude/
     ├── skills/artemis/       ← Artemis skill
-    └── agents/               ← subagents
+    ├── agents/               ← subagents
+    └── hooks/                ← automated guards enforcing the rules below (see settings.json)
 ```
+
+**Hooks are active in this project** (`.claude/hooks/`, wired in `.claude/settings.json`): they
+automatically remind/enforce the startup sequence, the vault-first rule, the navigation-assumption
+check, the server-side-blocker stop, and the GitHub Report format — so don't be surprised if a
+tool call is blocked or annotated with a reminder mid-session.
 
 ## Vault Location
 

@@ -41,9 +41,10 @@ or `mcp__Claude_in_Chrome__*` — these interfere with the user's Chrome session
 | `/diff [source] [target]` | TC library comparison | _(inline below)_ |
 | `/init [app-name] [url]` | First-run setup | `core-orchestrator.md` |
 | `/audit` | Project health check — folder, vault, memory, token budget | _(Agent Dispatch below)_ |
-| `/document [feature]` | Generate BA/SA developer reference (.md + .docx) — runs as subagent | _(Agent Dispatch below)_ |
+| `/document [module/feature]` | Generate BA/SA developer reference doc (.md + .docx) from vault | _(Agent Dispatch below)_ |
+| `/ticket [title?]` | Sprint QA — test ticket scope + edge cases → write/update TCs + spec → confirm green run + vault update | `commands/ticket.md` |
 
-**Loading rule:** Browser commands load their reference doc. Analysis commands (`/bug`, `/improve`, `/scope`, `/parse`, `/audit`, `/document`) use Agent Dispatch — do NOT load reference docs in main context.
+**Loading rule:** Browser commands load their reference doc. Analysis commands (`/bug`, `/improve`, `/scope`, `/parse`, `/audit`) use Agent Dispatch — do NOT load reference docs in main context.
 
 ---
 
@@ -55,6 +56,29 @@ bash ~/.claude/skills/artemis/setup.sh
 
 Installs all slash commands into `~/.claude/commands/`. Restart Claude Code after.
 
+**Maintenance commands (`/sync`, `/ingest`, `/setup`):** these three carry their full
+content directly at the installed `~/.claude/commands/` location rather than routing
+through this file's table — they're project-setup/maintenance utilities, not part of
+the test-execution pipeline. A copy also lives in `commands/` here for skill-package
+self-containment. If you edit one, edit both copies — they are not auto-synced.
+
+---
+
+## Context-First Rule — MANDATORY
+
+**Before any action** — navigation, browser command, data check, or analysis — if the user
+names a specific module or feature:
+
+1. Resolve the name → pipeline row → vault path (read `[VAULT]/_pipeline.md` if not already loaded)
+2. Load the module vault file: `[VAULT]/modules/[module]/[module]-module.md` or equivalent
+3. Load `[VAULT]/_navigation-flow.md` — this is the authority on how to reach any screen
+4. ONLY THEN proceed
+
+**Never assume a navigation path from a prior session's patterns.** A module or feature
+name resembling one you've tested before does not mean it shares that entry point or
+flow. The vault file tells you the entry point — load it first, act second. If the
+module file is missing, ask the user before navigating.
+
 ---
 
 ## Startup Sequence (2 steps)
@@ -64,8 +88,14 @@ S1: APP=$(cat .artemis-project 2>/dev/null | head -1)
     → If missing: run 1-gate onboarding (see core-orchestrator.md)
     → If found: read [APP]/app-guide.md (limit: 150 lines)
 
-S1b: VAULT=$(grep context_vault .artemis-project 2>/dev/null | cut -d= -f2)
-     → If found: read [VAULT]/_app-overview.md + [VAULT]/_test-data.md (limit: 80 lines each)
+S1b: VAULT=$(grep context_vault .artemis-project 2>/dev/null | cut -d= -f2 | sed "s|~|$HOME|")
+     → If found — load ALL of these every session (not conditional):
+         1. [VAULT]/_app-overview.md       (limit: 80 lines)   — app name, base URL, auth endpoint
+         2. [VAULT]/_test-data.md          (limit: 80 lines)   — default credentials + test records
+         3. [VAULT]/_invariants.md         (full file, ~60-80 lines) — behavioral ground truths; check FIRST when diagnosing unexpected behavior
+         4. [VAULT]/_navigation-flow.md    (full file, ~60-80 lines) — canonical redirects; NEVER assume a nav path without checking here
+         5. [APP]/results/artemis-learnings.md (limit: 60 lines) — prior session findings for THIS app; treat confirmed blockers as authoritative
+     → If the user named a specific module: ALSO load that module's vault file (no line limit)
      → Applies to browser commands only — skip for /context (it reads vault itself)
 
 S2: browser_close()  → clear any orphaned session
@@ -74,6 +104,9 @@ S2: browser_close()  → clear any orphaned session
 **S1-S2 apply to browser commands only** (`/artemis`, `/run`, `/explore`, `/resume`, `/rerun`).
 Analysis commands (`/bug`, `/improve`, `/parse`, `/scope`) use Agent Dispatch — skip startup entirely.
 Library commands (`/matrix`, `/diff`, `/init`) skip startup entirely.
+`/verify` and `/ticket` load their own, more detailed context in Step 0.5 / Phase 1 of
+`commands/verify.md` and `commands/ticket.md` — see those files rather than duplicating
+the tiered list here.
 
 ---
 
@@ -138,6 +171,16 @@ This saves 50–400KB of YAML from polluting execution context.
 3. **Living test library.** `test-cases/` follows: `INDEX → module folder → submodule file`.
    Module-prefixed IDs (`TC-ADM-001`). Max 300 lines per file. DB-first loading when
    `artemis.db` exists (15× fewer tokens than reading .md files).
+
+4. **Evidence Tier — know when the UI is authoritative vs. when to dig deeper.**
+   Default is **Tier A (UI-only):** the rendered screenshot is authoritative; only
+   escalate to console/network/API if a screenshot result is genuinely ambiguous after
+   one look. **Tier B (UI + API/DB required)** applies only to a narrower class of task —
+   confirming that data actually reached its destination (e.g. a form's values landing
+   correctly in a downstream table or report) — not general functional or visual testing.
+   Even under Tier B, the rendered UI wins on conflict: never trust a raw API/DB field
+   over what the UI actually renders. Declare which tier applies before testing begins —
+   see `commands/ticket.md` Phase 1.1 and `commands/verify.md` Step 0.5.
 
 ---
 
@@ -237,15 +280,17 @@ Spawn artemis-auditor subagent:
         Never deletes — report only.
 ```
 
-### `/document [feature]`
+### `/document [module/feature]`
 
 ```
 Spawn artemis-documenter subagent:
-  Context: feature name argument
-  Task: Read vault feature files + _navigation-flow.md + explore screenshots.
-        Generate BA/SA developer reference: [APP]/results/docs/[feature]-dev-spec.md
-        and [feature]-dev-spec.docx (via gen_docx.py if present).
-        Gate: present outline before writing. No browser.
+  Context: APP name + module/feature name
+  Read: vault feature file(s) for the module + _navigation-flow.md + _app-overview.md
+  Read: [APP]/results/screenshots/explore/[module]/ — list all available screenshots
+  Task: Gate — show document outline for user approval.
+        After approval: generate [feature]-dev-spec.md in [APP]/results/docs/.
+        Then run gen_docx.py (--input/--output args) to produce .docx if script exists.
+  Note: No browser — pure vault + screenshot file analysis.
 ```
 
 ---
@@ -267,9 +312,10 @@ Spawn artemis-documenter subagent:
 | `core-runner.md` | `/run`, `/rerun`, `/resume` — execution loop, selectors, screenshots, DB writes |
 | `core-orchestrator.md` | `/artemis`, `/init` — pipeline routing, onboarding, scope detection |
 | `explore-and-parse.md` | `/explore` — sitemap building, interaction harvesting, TC generation |
+| `optimization.md` | Consulted on token overflow, data splits, file budgets, checkpoints |
 | `bug-agent.md` | Subagent only — `/bug`, `/improve`, `/scope` |
 | `explore-agent.md` | Subagent only — `/parse` |
 | `angular-spa.md` | Load when app is Angular — Angular-specific interaction patterns |
 | `skill-learnings.md` | Consult on persistent issues — universal rules archive |
 | `context-vault.md` | `/context` — vault read order, TC gap detection, spec generation |
-| `optimization.md` | Consult on token overflow, data splits, file budgets, checkpoints |
+| `report-template.md` | `/ticket` Phase 5.2, `/bug` — canonical ticket/validation report structure |

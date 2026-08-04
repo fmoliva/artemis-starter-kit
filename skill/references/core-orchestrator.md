@@ -33,12 +33,15 @@ Parse into: `APP_NAME` (kebab-case), `APP_URL`.
 
 ```
 ──────────────────────────────────────
-  One more step: add your credentials
+  One more step: configure your app
 ──────────────────────────────────────
-  Open [APP_NAME]/.env and fill in:
+  Open [APP_NAME]/.env — it already has APP_URL set.
 
+  If your app requires login, also fill in:
     APP_USERNAME=your_username
     APP_PASSWORD=your_password
+
+  Leave them blank if the app has no login.
 
   Then reply "ready" (or tell me you've added them).
 ──────────────────────────────────────
@@ -90,8 +93,9 @@ EOF
 ### Auto-Generate app-guide.md (Quick Scan)
 
 1. Navigate to APP_URL with Playwright MCP
-2. Capture `<title>`, `<h1>`, login form labels → seed App Overview + Selector Patterns
-3. Login with provided credentials
+2. Capture `<title>`, `<h1>` → seed App Overview
+3. **If APP_USERNAME is set:** capture login form labels, login with the provided credentials, wait for the post-login redirect
+   **If APP_USERNAME is blank:** skip login — the app is public, proceed directly from the landing page
 4. Read all nav menu items → pre-populate Modules table (all marked ✅)
 5. Write `app-guide.md` from template with discovered data
 6. Mark undiscoverable sections as `[TODO]`
@@ -138,8 +142,8 @@ Read the user's request and match:
 | Scope | User Says | What Runs |
 |-------|-----------|-----------|
 | **End-to-End** | "run all tests", "full E2E" | All TCs across all modules |
-| **Module** | "test Authentication", "run Pharmacy" | All TCs in that module |
-| **Feature** | "test [Feature]", "run [Module] Worklist" | All TCs in that feature |
+| **Module** | "test Authentication", "run Checkout" | All TCs in that module |
+| **Feature** | "test [Feature]", "run [Module] Order Queue" | All TCs in that feature |
 | **Range** | "TC-1 to TC-10", "test cases 44-47" | Specific numbered range |
 | **Single** | "run TC-014" | One TC |
 | **Quick Action** | "quickly test X", "just create X" | 1 TC — best match for described action |

@@ -44,7 +44,7 @@ If any exceeds 50KB: reduce buttons to 5, truncate labels at 60 chars.
 
 ```bash
 # Always read per-module files:
-cat results/modules/triage.json
+cat results/modules/orders.json
 
 # Never read the exploration JSON directly
 ```
@@ -104,16 +104,16 @@ Write `[APP]/results/session-checkpoint.md` after every run:
 ## Completed TCs
 | TC ID | Status | Title |
 |-------|--------|-------|
-| TC-TRI-001 | PASS | Login with valid credentials |
-| TC-TRI-002 | FAIL | Login with empty password |
+| TC-MOD-001 | PASS | Login with valid credentials |
+| TC-MOD-002 | FAIL | Login with empty password |
 
 ## Remaining TCs
 | TC ID | Title |
 |-------|-------|
-| TC-TRI-010 | Patient search by name |
+| TC-MOD-010 | Search by name |
 
 ## Resume From
-TC-TRI-010
+TC-MOD-010
 
 ## Session Notes
 - [any context the next session needs]
@@ -173,9 +173,9 @@ Once `.spec.ts` files exist, use `/rerun` instead of `/run`.
 
 ---
 
-## Measured Footprints (QCHIS Staging — 2026-04-21 Audit)
+## Measured Footprints (Example Audit — Production Project)
 
-Real line counts from the QCHIS project. Use as a calibration reference.
+Real line counts from a production project audit. Use as a calibration reference.
 
 ### Session Base Load
 | Component | Lines | ~Tokens |

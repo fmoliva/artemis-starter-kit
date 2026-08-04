@@ -5,13 +5,13 @@ This is an Artemis QA project. Read `AGENTS.md` for the full methodology.
 ## Context to read before writing tests
 
 - `vault/_app-overview.md` — app identity, base URL, module entry paths, auth selectors
-- `vault/_test-data.md` — test users, patients, credentials, program IDs
+- `vault/_test-data.md` — test users, records, credentials, account IDs
 - `vault/[feature].md` — per-feature context and confirmed selectors
 - `test-cases/[feature].md` — existing TC coverage (identify gaps before writing specs)
 
 ## Spec conventions
 
-- **Relative `goto` only**: `page.goto('/triage/search')` — `baseURL` in `playwright.config.ts`
+- **Relative `goto` only**: `page.goto('/search')` — `baseURL` in `playwright.config.ts`
   resolves the host from `APP_URL` in `.env`
 - **No `login()` in `beforeEach`**: session is saved by `global-setup.ts` via `storageState`
 - **Mark unverified selectors**: `// TODO: verify selector` — must be resolved before running

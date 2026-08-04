@@ -161,6 +161,12 @@ async function globalSetup() {
   await page.getByRole('textbox', { name: 'Username' }).fill(process.env.APP_USERNAME!);
   await page.getByRole('textbox', { name: 'Password' }).fill(process.env.APP_PASSWORD!);
   await page.getByRole('button', { name: 'Login' }).click();
+  // Some apps show a one-time post-login dialog (e.g. a location/context picker).
+  // If `app-guide.md` documents one, dismiss it here before waiting for the landing URL:
+  const postLoginDialog = page.getByRole('dialog', { name: '[Optional Post-Login Dialog]' });
+  if (await postLoginDialog.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await postLoginDialog.getByRole('button', { name: 'Cancel' }).click();
+  }
   await page.waitForURL('**/dashboard');
   await page.context().storageState({ path: path.join(__dirname, '../playwright/.auth/user.json') });
   await browser.close();
@@ -192,6 +198,13 @@ Before writing `beforeEach` for any feature with `subtype: modal` or `subtype: t
 ### Spec structure
 ```typescript
 import { test, expect } from '@playwright/test';
+import path from 'path';
+
+// ONLY include STORAGE_STATE + afterEach if the spec calls a context-switching helper
+// (e.g. changeLocationTo) with a non-default context. If the app rotates its session
+// cookie on that kind of switch, afterEach keeps user.json current so subsequent
+// tests get valid cookies — see the Framework Patterns entry in skill-learnings.md.
+const STORAGE_STATE = path.join(__dirname, '../playwright/.auth/user.json');
 
 test.describe('[Module] — [Submodule]', () => {
 
@@ -200,6 +213,11 @@ test.describe('[Module] — [Submodule]', () => {
     await page.goto('/[target-url]');
     // sub-tab click if needed
     // For modal features: use Playwright path from ## Navigation to Trigger in vault
+  });
+
+  // Include ONLY if this spec switches context via a helper like changeLocationTo:
+  test.afterEach(async ({ page }) => {
+    await page.context().storageState({ path: STORAGE_STATE });
   });
 
   test('TC-XXX-NNN: [title]', async ({ page }) => {
@@ -221,7 +239,7 @@ test.describe('[Module] — [Submodule]', () => {
 ### Step translation patterns
 | TC step pattern | Playwright code |
 |----------------|-----------------|
-| "Enter X in [Field] field" | `await page.getByLabel('[Field]').fill('X')` |
+| "Enter X in [Field] field" | `await page.getByLabel('[Field]').pressSequentially('X', { delay: 50 })` (use `.fill('X')` for login fields only — login forms are often plain HTML, not reactive forms) |
 | "Click the [Button] button" | `await page.getByRole('button', { name: '[Button]' }).click()` |
 | "Select [Option] from [Dropdown]" | `await page.getByRole('combobox', { name: '[Dropdown]' }).selectOption('[Option]')` |
 | "Observe / Verify [element] visible" | `await expect(page.getByRole(...)).toBeVisible()` |
@@ -263,7 +281,22 @@ Then manually correct the TC count rows in both INDEX.md files to match actual f
 
 ---
 
-## Step 6b — Next Steps Output
+## Step 6b — Update Pipeline Tracker (MANDATORY)
+
+After writing spec files, update `${VAULT}/_pipeline.md` for the feature row:
+
+| Column | Value to write |
+|--------|---------------|
+| TCs | Total TC count (new + existing) |
+| Spec | `✓` |
+| Last Updated | today's date (YYYY-MM-DD) |
+| Selectors | `partial` if any `// TODO: verify selector` remain; `✓` if zero |
+
+Do this **before** reporting to the user. Missing this step means the pipeline drifts out of sync.
+
+---
+
+## Step 6c — Next Steps Output
 
 After writing spec files, always print this block (substitute real values):
 

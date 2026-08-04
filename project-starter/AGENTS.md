@@ -16,7 +16,7 @@ project/
 ├── test-cases/                # TC library (markdown, one file per feature)
 └── vault/                     # Context docs
     ├── _app-overview.md       # App identity, base URL, all module URLs, auth selectors
-    ├── _test-data.md          # Test users, patients, credentials, IDs
+    ├── _test-data.md          # Test users, records, credentials, IDs
     ├── _pipeline.md           # Coverage status per feature (TCs ✓, Spec ✓, Last Green)
     ├── known-bugs.md          # Open bugs that affect test design
     └── [feature].md           # Per-feature context, selectors, edge cases
@@ -36,7 +36,7 @@ To switch environments: change `APP_URL` in `.env`, delete `playwright/.auth/use
 ### Step 1 — Generate TCs and spec (no browser needed)
 
 1. Read `vault/_app-overview.md` → app identity, module URLs, auth selectors
-2. Read `vault/_test-data.md` → test users, patients, credentials
+2. Read `vault/_test-data.md` → test users, records, credentials
 3. Read `vault/[feature].md` if it exists → feature-specific context and known selectors
 4. Read `test-cases/[feature].md` if it exists → identify what's already covered
 5. Generate/update `test-cases/[feature].md` with structured TCs (ID, title, steps, expected)

@@ -18,6 +18,7 @@ Scaffold a new Artemis project folder with the live dashboard server, all requir
 3. Writes `.artemis-project` file in the current directory (enables all other Artemis commands to auto-resolve paths)
 4. Creates `[app-name]/app-guide.md` from the examples template
 5. Runs `npm install` in `[app-name]/`
+5.5. (Optional) Scaffolds an Obsidian context vault, including the `_queue.md` testing queue
 6. Prints a success summary with next steps
 
 ## Execution
@@ -89,6 +90,48 @@ cd "$APP_NAME" && npm install
 node "$APP_NAME/scripts/setup-db.js"
 ```
 
+### Step 7.5 — (Optional) Set up the context vault
+
+Ask the user:
+
+```
+Set up an Obsidian context vault for [app-name]? It stores app knowledge (navigation flow,
+test data, known bugs, pipeline status) and a testing queue you can add cards to for
+Claude to pick up via /ticket. (yes / no)
+```
+
+If **no** — skip to Step 8. Artemis still works fully without a vault (via `/parse`, `/run`,
+`/explore` directly against `[app-name]/`); the vault only adds `/context`, `/ticket`, and
+persistent cross-session knowledge.
+
+If **yes** — ask for the vault path (default suggestion: `~/Documents/[app-name]-vault/` if
+the user has no existing Obsidian vault to point to), then:
+
+```bash
+VAULT_PATH="[resolved path, ~ expanded to $HOME]"
+mkdir -p "$VAULT_PATH"
+
+SKILL_DIR=~/.claude/skills/artemis
+for f in _app-overview.md _env-matrix.md _invariants.md _navigation-flow.md _pipeline.md _test-data.md _queue.md known-bugs.md; do
+  cp "$SKILL_DIR/templates/vault/$f" "$VAULT_PATH/$f"
+done
+cp "$SKILL_DIR/templates/vault/feature-template.md" "$VAULT_PATH/feature-template.md"
+mkdir -p "$VAULT_PATH/modules" "$VAULT_PATH/cross-module" "$VAULT_PATH/raw/_archive"
+
+# Fill placeholders
+sed -i.bak "s/APP_NAME_PLACEHOLDER/$APP_NAME/g; s/TODAY_PLACEHOLDER/$(date +%F)/g" \
+  "$VAULT_PATH"/*.md 2>/dev/null && rm -f "$VAULT_PATH"/*.bak
+
+# Append vault path to .artemis-project (line 1 stays the app name — other commands read it with `head -1`)
+echo "context_vault=$VAULT_PATH" >> .artemis-project
+```
+
+This gives the project:
+- `_queue.md` — an Obsidian Kanban board (📥 Pending / 🔄 In Progress / ✅ Done / 🚫 Blocked). Add a card any time you want something tested; run `/ticket [card title]` (or just `/ticket` to pick the highest-priority pending card) to have Artemis test it and write up the results.
+- The other `_*.md` files — hot/warm-tier context loaded automatically by `/context`, `/ticket`, `/verify`, and `/explore`.
+
+Tell the user: if they use the Obsidian app, install the **Kanban** community plugin (Settings → Community Plugins) so `_queue.md` renders as a drag-and-drop board instead of plain markdown — the file works either way.
+
 ### Step 8 — Print success summary
 
 ```
@@ -97,6 +140,8 @@ node "$APP_NAME/scripts/setup-db.js"
   Project:    [app-name]/
   Dashboard:  http://localhost:7373
   DB:         [app-name]/artemis.db ✓
+  Vault:      [vault-path]/  (skip this line if no vault was set up)
+    Queue:    [vault-path]/_queue.md — add a card, then run /ticket
 ─────────────────────────────────────────
 
 Next steps:
@@ -105,6 +150,8 @@ Next steps:
      — or —
      /explore [url] to discover the app first
      /parse [file] to import existing test cases
+     [only if a vault was set up:] /context [feature] to generate TCs from vault docs
+     [only if a vault was set up:] add a card to _queue.md and run /ticket to have Artemis pick it up
 
 Dashboard will be available at http://localhost:7373 when you run your first test.
 ```

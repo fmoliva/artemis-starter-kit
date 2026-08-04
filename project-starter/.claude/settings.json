@@ -1,5 +1,38 @@
 {
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/session-startup-guard.sh\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/vault-first-guard.sh\"'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__playwright__browser_navigate",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/nav-flow-guard.sh\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Bash",
@@ -8,6 +41,26 @@
             "type": "command",
             "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/detect-server-errors.sh\"'",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/report-format-guard.sh\"'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/report-format-guard.sh\"'",
+            "timeout": 5
           }
         ]
       }

@@ -37,5 +37,5 @@ Never silently assume a redirect. One wrong assumption can cascade into hours of
 ---
 
 > Add confirmed flows here as they are discovered during `/explore` or `/verify` sessions.
-> Use the exact URL paths (e.g. `/modules`, `/patients/search`) — not page titles.
+> Use the exact URL paths (e.g. `/modules`, `/customers/search`) — not page titles.
 > If a redirect is surprising or non-obvious, add a Notes column entry explaining why.

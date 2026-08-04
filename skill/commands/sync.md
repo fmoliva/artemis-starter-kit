@@ -71,7 +71,7 @@ Print:
 ✅  Sync complete
 
   Project ([N] files updated):
-    • tests/triage-patient-registration.spec.ts
+    • tests/checkout-flow.spec.ts
     • .claude/skills/artemis/commands/verify.md
     [or: No changes]
 

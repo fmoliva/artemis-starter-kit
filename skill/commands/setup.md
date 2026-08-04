@@ -47,7 +47,7 @@ Ask each question and wait for the answer:
 
 ```
 Q1: What is the name of the app you're testing?
-    (e.g. "Patient Records System" → folder: patient-records-system)
+    (e.g. "Acme Storefront" → folder: acme-storefront)
 
 Q2: Do you have an existing vault repo, or are you starting fresh?
     (a) Starting fresh — create vault inside this project
