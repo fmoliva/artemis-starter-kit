@@ -116,3 +116,25 @@ If any test run produces a server-side error — HTTP 5xx, DB constraint violati
 2. Report: feature name, affected TCs, exact error, endpoint
 3. Log in `vault/known-bugs.md` and mark `_pipeline.md` as `⚠ blocked — server bug [date]`
 4. Move on to the next feature
+
+## Usage & Token Logging Rule — MANDATORY
+
+AI platform usage allowances vary by vendor and can change between billing cycles, and this
+pipeline depends on browser automation, so usage should be monitored over time rather than
+assumed. This rule applies regardless of which AI tool is running the pipeline.
+
+**When:** at the end of any command that opens a browser — `/explore`, `/verify`, `/ticket`,
+`/run`, `/bug` (when it opens the browser to investigate).
+
+**Action:** append a row to `vault/_usage-log.md` with: date, command, feature/module, a rough
+tool-call tally (browser snapshot / screenshot / navigation counts), and which
+`vault/_token-budget.md` Budget Rules were followed or skipped.
+
+**Usage/cost number:** attach it only if the user volunteers a usage or cost figure from their AI
+platform during or after the session. Never solicit it proactively every session.
+
+**Hard constraint:** this logging is observational only. It must never cause a testing step to be
+skipped, shortened, or sampled instead of covered — the Stop-and-Ask, Server-Side Blocker, and
+full-coverage rules above all still apply in full. If a pattern in the log suggests a new Budget
+Rule, propose it to the user before adopting it — never self-apply a rule that trades test
+coverage for token savings.

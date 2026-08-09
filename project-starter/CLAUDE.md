@@ -133,6 +133,8 @@ Structure:
 - `_pipeline.md` — pipeline tracker: TCs, explored, last green per feature (warm tier)
 - `_navigation-flow.md` — canonical expected redirects after each user action (cold tier)
 - `known-bugs.md` — structured bug log (cold tier)
+- `_token-budget.md` — token/usage Budget Rules (cold tier; read before proposing a new rule)
+- `_usage-log.md` — per-session usage log, appended after every browser-touching command (cold tier)
 - `cross-module/` — features used by 2+ modules
 - `modules/[module]/` — module-owned features + forms/ subfolder
 - `raw/` — free-form session dump zone (run `/ingest` to promote)
@@ -211,3 +213,29 @@ If any test run, investigation script, or browser interaction produces a server-
 3. Log the bug in `vault/known-bugs.md`
 4. Update `_pipeline.md`: mark the feature row `⚠ blocked — server bug [date]`
 5. Move on to the next feature in the pipeline
+
+## Usage & Token Logging Rule — MANDATORY
+
+Claude's usage allowance can change between billing cycles, and this pipeline depends on browser
+automation (Playwright MCP), so usage needs to be monitored over time rather than assumed.
+
+**When:** at the end of any command that opens Playwright MCP — `/explore`, `/verify`, `/ticket`,
+`/run`, `/bug` (when it opens the browser to investigate).
+
+**Action:** append a row to `$VAULT/_usage-log.md` with: date, command, feature/module, a rough
+tool-call tally (`browser_snapshot` / `browser_take_screenshot` / navigation counts), and which
+`$VAULT/_token-budget.md` Budget Rules were followed or skipped.
+
+**Dashboard usage %:** attach it to the entry only if the user volunteers it during or after the
+session. Never solicit it proactively.
+
+**Hard constraint:** this logging is observational only. It must never cause a testing step to be
+skipped, shortened, or sampled instead of covered — the Stop-and-Ask, Server-Side Blocker, and
+Navigation Assumption rules above all still apply in full. If a pattern in the log suggests a new
+Budget Rule, propose it to the user before adopting it — do not self-apply a rule that trades
+testing coverage for token savings.
+
+Prefer a targeted `browser_find` / narrow `browser_evaluate` over a full `browser_snapshot` for
+routine post-action verification (e.g. confirming a field pre-populated correctly). This does
+**not** apply to diagnosing an unexpected or failed result — a full snapshot is still required
+before writing any fix.

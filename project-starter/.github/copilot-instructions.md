@@ -36,6 +36,13 @@ If a test run hits a server-side error (HTTP 5xx, DB constraint, system administ
 - Stop immediately — do NOT retry or work around it
 - Report to the user, log in `vault/known-bugs.md`, move to the next feature
 
+## Usage & Token Logging Rule
+
+At the end of any command that opens the browser, append a row to `vault/_usage-log.md`: date,
+command, feature/module, a rough tool-call tally, and which `vault/_token-budget.md` Budget Rules
+were followed/skipped. Attach a usage/cost number only if the user volunteers one — never ask for
+it. This is observational only and must never cause a testing step to be skipped or shortened.
+
 ## Key paths
 
 | Path | Purpose |
@@ -44,3 +51,5 @@ If a test run hits a server-side error (HTTP 5xx, DB constraint, system administ
 | `playwright/.auth/user.json` | Saved login session — delete when switching environments |
 | `vault/_pipeline.md` | Coverage tracker — update after each step |
 | `vault/known-bugs.md` | Open bugs that affect test design — read before writing |
+| `vault/_token-budget.md` | Token/usage Budget Rules — read before proposing any new rule |
+| `vault/_usage-log.md` | Per-session usage log — append a row after every browser-touching command |

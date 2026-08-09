@@ -173,6 +173,42 @@ Once `.spec.ts` files exist, use `/rerun` instead of `/run`.
 
 ---
 
+## Usage Logging Protocol
+
+Track real per-session tool-call and usage/cost data instead of assuming the rules above are
+holding usage down. This applies to any MCP-capable client (Claude Code, Gemini CLI, Cursor,
+Copilot, etc.) — "usage %" dashboards differ per vendor, but the logging discipline is the same.
+
+**When:** at the end of any command that opens a browser via MCP — `/explore`, `/verify`,
+`/ticket`, `/run`, `/bug` (when it investigates via browser).
+
+**Action:** append a row to `_usage-log.md` in the context vault: date, command, feature/module,
+rough tool-call tally (snapshot / screenshot / navigation counts), which Budget Rules from
+`_token-budget.md` were followed or skipped.
+
+**Usage/cost number:** attach it to the entry only if the user volunteers one during or after the
+session (a usage-percentage dashboard, a token/cost report). Never solicit it proactively.
+
+**Hard constraint:** this logging is observational only. It must never cause a testing step to be
+skipped, shortened, or sampled instead of covered — Stop-and-Ask, Server-Side Blocker, and
+full-coverage rules all still apply in full. If a pattern in the log suggests a new Budget Rule,
+propose it to the user before adopting it — never self-apply a rule that trades test coverage for
+token savings.
+
+## Targeted Checks Over Full Snapshots
+
+For routine post-action verification — confirming a single field/value/state after an action
+already expected to succeed (e.g. a pre-populated field, a toggle result) — use a targeted, scoped
+tool call (a find-by-selector call, a narrow evaluate/query) instead of a full accessibility-tree
+snapshot. Reserve full snapshots for:
+
+- Initial page discovery
+- Diagnosing an unexpected or failed result — still required before writing any fix; never
+  diagnose from error text alone
+- Checking several elements at once
+
+Don't re-snapshot state that hasn't changed since the last capture — reuse it instead.
+
 ## Measured Footprints (Example Audit — Production Project)
 
 Real line counts from a production project audit. Use as a calibration reference.
