@@ -1,5 +1,20 @@
 # Artemis Starter Kit
 
+## 🛑 HARD STOP — Confidentiality Rule (Read This First)
+
+**This repo is public. Never mention, name, or leak any internal/client project that Artemis learned from or was developed against** — no app names, client names, internal codenames, or identifying details. Ever. This applies everywhere: file content, code comments, UI strings/placeholders, examples, documentation, AND commit messages/bodies (commit messages are public on GitHub and are not covered by reviewing the file diff alone).
+
+This is a strict, permanent directive — it does not get relaxed for convenience, "just this once," or because a name seems generic. Treat every proper noun that isn't "Artemis" (or a well-known public tool like Playwright/Angular) as suspect and strip it.
+
+**Before every commit or push to this repo:**
+1. `git grep -in "<name>"` for any specific internal project name you know was involved in this session's source material — but do not rely on this alone, since it only catches names you already suspect.
+2. Re-read the full diff AND the commit message you're about to write for any proper noun that could identify a source project, client, or app.
+3. When porting/syncing content from an internal Artemis instance (e.g. skill-learnings, quirks, examples) into this kit, actively genericize identifying details rather than just copying and hoping nothing slipped through — internal project names belong in the *reasoning* you did to write generic guidance, never in the output.
+
+**If a leak is discovered after it's already pushed:** stop and flag it to the user before acting. Fixing file *content* can go in a normal new commit. Fixing a commit *message* that's already public requires `git commit --amend` + force-push, which rewrites public history — get explicit user confirmation before doing that, per the standing rule against rewriting published history without asking.
+
+---
+
 ## On Every Session Start — State Detection
 
 Run these checks immediately and act on the result:
@@ -93,6 +108,9 @@ Feature Coverage Lifecycle:
   1. /context [feature]  — write TCs + spec (zero browser)
   2. /explore [url]      — confirm live selectors
   3. /verify [feature]   — run spec → record green run
+
+Or queue it up: add a card to vault/_queue.md, then run /ticket — Artemis tests it
+end-to-end and updates the vault for you.
 
 Next step: open [APP_SLUG]/ in Claude Code and run /context [first-feature]
 ```
@@ -242,6 +260,7 @@ If any test run, investigation script, or browser interaction produces a server-
 | `/context [feature]` | Read vault → generate TCs + Playwright spec (zero browser) |
 | `/explore [url]` | Browser discovery — harvest live selectors |
 | `/verify [feature]` | Run spec → auto-fix failures → record green date |
+| `/ticket [title?]` | Test the top `vault/_queue.md` card (or a named one) end-to-end |
 | `/run [TC-ID] [url]` | Execute specific TCs |
 | `/bug [description]` | Deep failure analysis via subagent |
 | `/improve [test-file]` | Review + score test suite via subagent |

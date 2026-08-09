@@ -86,6 +86,18 @@ This helps Artemis run tests accurately and skip common blockers.
 
 ---
 
+## Step 6.5 — (Optional) Set Up a Context Vault + Testing Queue
+
+If you're using the full starter kit (not just the standalone skill), `vault-starter/` ships
+a Kanban-style testing queue at `_queue.md` (📥 Pending / 🔄 In Progress / ✅ Done / 🚫 Blocked).
+Add a card any time you want something tested — a new feature, a bug fix to verify, an edge
+case you thought of — then run `/ticket` (no argument grabs the highest-priority pending
+card). Artemis reads the card, tests it end-to-end, and updates the vault with results.
+Install the free **Kanban** Obsidian community plugin to render it as a drag-and-drop board.
+See `ONBOARDING.md` for the full vault setup walkthrough.
+
+---
+
 ## Step 7 — Run Your First Test
 
 ```
@@ -110,6 +122,9 @@ Artemis will:
 | `/artemis [url]` | Full 7-agent QA pipeline |
 | `/run [scope] [url]` | Execute specific test cases |
 | `/explore [url]` | Autonomous exploratory testing |
+| `/context [feature]` | Generate TCs + specs from vault docs (zero browser) |
+| `/ticket [title?]` | Test the top `_queue.md` card (or a named one) end-to-end |
+| `/verify [feature]` | Re-run an existing spec, auto-fix broken selectors |
 | `/parse [file]` | Convert docs/text → structured test cases |
 | `/improve` | Review and improve existing test cases |
 | `/matrix` | Generate a coverage matrix |

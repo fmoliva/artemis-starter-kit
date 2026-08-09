@@ -88,6 +88,17 @@ Artemis includes 4 specialized subagents that Claude spawns automatically for de
 | `/rerun` | Re-run existing spec via CLI (zero MCP tokens) |
 | `/setup` | Reconfigure project after initial setup |
 | `/audit` | Full health check: skill files, vault, specs, token budget |
+| `/ticket [title?]` | Test the top card in `vault/_queue.md` (or a named one) end-to-end |
+
+## Testing Queue (`vault/_queue.md`)
+
+The vault ships with a Kanban-style testing queue (📥 Pending / 🔄 In Progress / ✅ Done / 🚫 Blocked).
+Add a card any time you want something tested — a new feature, a bug fix to verify, an edge
+case you thought of — with a linked note describing what changed. Run `/ticket` (no argument
+picks the highest-priority pending card) and Artemis reads the card, tests it end-to-end
+(targeted validation + comprehensive edge-case coverage), and updates the vault with results
+before moving the card to Done or Blocked. Install the free **Kanban** community plugin in
+Obsidian to render it as a drag-and-drop board — the file works fine without it too.
 
 ## Vault Templates
 

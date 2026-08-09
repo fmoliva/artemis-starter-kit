@@ -72,6 +72,7 @@ You can put this vault anywhere — a local folder, Obsidian vault, Google Drive
 | `_test-data.md` | Test credentials, test records/users, known-good data |
 | `_pipeline.md` | Leave as-is — auto-updated by commands |
 | `known-bugs.md` | Start empty — fill in as you find bugs |
+| `_queue.md` | Optional testing queue — add a card any time you want something tested, then run `/ticket` |
 
 **Document your first module:**
 ```bash
@@ -146,6 +147,16 @@ Claude opens a browser → maps all inputs, buttons, dropdowns → updates the s
 ```
 Claude runs the spec → auto-fixes selector failures → confirms the catalog → records the green date.
 
+**Or queue it up instead:**
+Open `vault/_queue.md` and add a card under `## 📥 Pending` describing what to test (a new
+feature, a bug fix, an edge case). Then run:
+```
+/ticket
+```
+Claude picks the highest-priority pending card, tests it end-to-end (targeted validation +
+comprehensive scenario coverage), updates the vault, and moves the card to Done or Blocked.
+Pass a title (`/ticket [card title]`) to target a specific card instead of the top one.
+
 ---
 
 ## Command Reference
@@ -155,6 +166,7 @@ Claude runs the spec → auto-fixes selector failures → confirms the catalog �
 | `/context [module]` | Zero-browser: reads vault → generates TCs + spec |
 | `/explore [url]` | Browser: discovers selectors, builds sitemap |
 | `/verify [module]` | Runs spec → diagnoses failures → auto-fixes selectors |
+| `/ticket [title?]` | Test the top `_queue.md` card (or a named one) end-to-end — targeted + comprehensive coverage + vault updates |
 | `/run [TC-ID] [url]` | Execute a specific test case via Playwright CLI |
 | `/bug [description]` | Deep failure analysis via subagent |
 | `/improve [spec-file]` | Review and score a test suite |
@@ -171,6 +183,7 @@ your-vault/
 ├── _app-overview.md        ← loaded every session
 ├── _test-data.md           ← loaded every session
 ├── _pipeline.md            ← pipeline status: TCs, Explored, Last Green
+├── _queue.md               ← Kanban testing queue — add cards, run /ticket to execute them
 ├── known-bugs.md           ← open bugs affecting test design
 ├── cross-module/           ← features used by 2+ modules
 ├── modules/
