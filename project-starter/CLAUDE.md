@@ -239,3 +239,13 @@ Prefer a targeted `browser_find` / narrow `browser_evaluate` over a full `browse
 routine post-action verification (e.g. confirming a field pre-populated correctly). This does
 **not** apply to diagnosing an unexpected or failed result — a full snapshot is still required
 before writing any fix.
+
+**Context management for auto-continue queue runs:** `/ticket`'s Auto-Continue Rule (see
+`skill/commands/ticket.md`) can drain the whole Pending column in one unbroken session with no
+natural pause between cards. There is no mechanism to force a context compaction after each
+individual ticket — compaction is either automatic (size-based) or manually run via `/compact`.
+This project's `.claude/settings.json` sets a tightened `autoCompactWindow` (150000, vs. the
+platform default) so automatic compaction triggers more proactively during a long auto-continue
+run instead of waiting near the full context limit. This is a size-based approximation, not a
+true per-ticket trigger — a single ticket's own MCP work can still push a compaction mid-ticket.
+If that starts causing rework (lost detail mid-investigation), raise the value back up.

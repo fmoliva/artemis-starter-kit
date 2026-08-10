@@ -195,6 +195,23 @@ full-coverage rules all still apply in full. If a pattern in the log suggests a 
 propose it to the user before adopting it — never self-apply a rule that trades test coverage for
 token savings.
 
+## Context Compaction for Auto-Continue Queue Runs
+
+`/ticket`'s Auto-Continue Rule (see `commands/ticket.md`) drains the entire `📥 Pending` column
+in one unbroken session — after each card lands on Done/Blocked it starts the next one without
+asking, and only stops for a missing/untestable note, a >20-scenario matrix, or a Stop-and-Ask /
+Server-Side Blocker hit mid-ticket. That means a long queue can run through many cards, and many
+rounds of Playwright MCP snapshots, with no natural pause to compact context in between.
+
+There is no hook or tool that can force a compaction after a specific event (a ticket finishing,
+a card moving columns) — compaction is either automatic (context-size triggered) or run manually
+via `/compact`. The closest lever is tightening `autoCompactWindow` in the project's
+`.claude/settings.json` (see `project-starter/.claude/settings.json`) so the automatic threshold
+fires more proactively during a long auto-continue run instead of waiting near the full context
+limit. This is a size-based approximation, not a true per-ticket trigger — a single ticket's own
+MCP work can still push a compaction mid-ticket. If that starts causing rework (lost detail
+mid-investigation), raise the value back up in that project's settings.
+
 ## Targeted Checks Over Full Snapshots
 
 For routine post-action verification — confirming a single field/value/state after an action

@@ -97,8 +97,11 @@ Add a card any time you want something tested — a new feature, a bug fix to ve
 case you thought of — with a linked note describing what changed. Run `/ticket` (no argument
 picks the highest-priority pending card) and Artemis reads the card, tests it end-to-end
 (targeted validation + comprehensive edge-case coverage), and updates the vault with results
-before moving the card to Done or Blocked. Install the free **Kanban** community plugin in
-Obsidian to render it as a drag-and-drop board — the file works fine without it too.
+before moving the card to Done or Blocked. It then automatically picks up the next Pending card
+and keeps going — no need to re-run `/ticket` per card or wrap it in a loop; it only pauses for
+a missing/untestable note, an oversized scenario matrix, or a Stop-and-Ask/Server-Side Blocker
+hit mid-ticket. Install the free **Kanban** community plugin in Obsidian to render it as a
+drag-and-drop board — the file works fine without it too.
 
 ## Vault Templates
 
