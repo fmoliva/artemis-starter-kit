@@ -67,6 +67,7 @@ Artemis includes 4 specialized subagents that Claude spawns automatically for de
 | **artemis-bug-analyst** | `/bug`, `/improve`, `/scope` | Reproduces failures, classifies the root cause layer (UI / API / Data / State / Timing), scores test suites on 5 axes, and ranks regression targets by relevance. Writes structured bug reports to `results/bugs/`. |
 | **artemis-parser** | `/parse`, `/ingest` | Converts any input — DOCX, markdown, prose, tables, checklists — into structured Artemis test cases. Normalizes TC IDs, detects edge cases, and outputs directly to the TC library. |
 | **artemis-auditor** | `/audit` | Runs a 4-pass project health check: project folder cleanliness, vault file freshness, memory file quality, and token budget usage. Writes a report to `results/audits/`. |
+| **artemis-compliance-auditor** | `/compliance` | Read-only audit of completed `/ticket` cards against every mandatory output (report structure, card stub, vault updates, bug log, pipeline row, queue column). Verifies artifacts on disk, never the ticket's own claims. |
 | **artemis-documenter** | `/document` | Reads vault feature files and explore screenshots to generate BA/SA-style developer reference documents (`.md` + `.docx`). Includes field matrices, conditional logic tables, navigation steps, and known quirks. No browser needed. |
 
 ---
@@ -89,6 +90,8 @@ Artemis includes 4 specialized subagents that Claude spawns automatically for de
 | `/setup` | Reconfigure project after initial setup |
 | `/audit` | Full health check: skill files, vault, specs, token budget |
 | `/ticket [title?]` | Test the top card in `vault/_queue.md` (or a named one) end-to-end |
+| `/compliance [title?]` | Independently audit completed tickets against `/ticket`'s mandatory outputs |
+| `/kanban-cleanup` | Archive stale ticket description files and old Done cards from the queue |
 
 ## Testing Queue (`vault/_queue.md`)
 
@@ -110,3 +113,12 @@ All templates in `vault-starter/templates/` include a `## Navigation to Trigger`
 ## Token Optimization
 
 See `skill/references/optimization.md` for: token overflow detection, data split protocol after `/explore`, file size budgets, session checkpoint format, and CLI vs MCP cost ratios.
+
+---
+
+## Security notes
+
+- **Setup scripts** never pipe a downloaded script into a shell. `setup-prereqs.sh` / `.ps1` ask before installing anything (`--yes` skips the prompt for `.sh`) and use your OS package manager. Homebrew, if missing, must be installed by you from [brew.sh](https://brew.sh).
+- **Live server** (`server.js`) binds to `127.0.0.1` with CORS limited to the local dashboard. To share on a LAN set `HOST=0.0.0.0` **and** `TEAM_TOKEN` (the server refuses to start otherwise).
+- **Hooks** run only local scripts, make no network calls and keep state under `.claude/.state/` (git-ignored). See `project-starter/.claude/hooks/README.md`.
+- **Secrets** live only in `.env` (git-ignored). Never commit real credentials, URLs or client names to this repo.

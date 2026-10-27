@@ -845,6 +845,16 @@ flowchart LR
           <span class="cmd-badge badge-agent">Agent</span>
         </div>
         <div class="cmd-card">
+          <div class="cmd-name">/compliance [title?]</div>
+          <div class="cmd-desc">Independently audits completed tickets against every mandatory /ticket output by reading artifacts on disk. Read-only.</div>
+          <span class="cmd-badge badge-agent">Agent</span>
+        </div>
+        <div class="cmd-card">
+          <div class="cmd-name">/kanban-cleanup</div>
+          <div class="cmd-desc">Archives stale ticket description files and old Done cards into the queue's Archive section.</div>
+          <span class="cmd-badge badge-cli">CLI</span>
+        </div>
+        <div class="cmd-card">
           <div class="cmd-name">/document [feature]</div>
           <div class="cmd-desc">Generates a BA/SA developer reference document (.md + .docx) from vault feature files and explore screenshots. No browser needed.</div>
           <span class="cmd-badge badge-agent">Agent</span>
@@ -882,10 +892,12 @@ flowchart LR
   M["Main Claude\nOrchestrator"] -->|"/bug\n/improve\n/scope"| BA["artemis-bug-analyst\nDeep failure analysis\nTest suite scoring\nRegression recommender"]
   M -->|"/parse\n/ingest TC section"| P["artemis-parser\nTC generation\nDocument conversion\nStructured normalization"]
   M -->|"/audit"| AU["artemis-auditor\n4-pass health check\nVault freshness\nToken budget"]
+  M -->|"/compliance"| CA["artemis-compliance-auditor\nTicket output audit\nRead-only"]
   M -->|"/document"| DO["artemis-documenter\nBA/SA dev spec\n.md + .docx output"]
   BA -->|"results/bugs/\nBUG-MODULE-DATE.md"| R1["Bug reports"]
   P -->|"test-cases/[module]/"| R2["TC library"]
   AU -->|"results/audits/\naudit-DATE.md"| R3["Audit reports"]
+  CA -->|"compliance report"| R5["Compliance findings"]
   DO -->|"results/docs/\n[feature]-dev-spec.docx"| R4["Dev specs"]
   style M fill:#1e2330,stroke:#6c8eff,color:#e2e8f0
   style BA fill:#2a1e3a,stroke:#a78bfa,color:#e2e8f0
@@ -924,6 +936,16 @@ flowchart LR
           <span class="agent-output">Project folder health</span>
           <span class="agent-output">Vault file freshness</span>
           <span class="agent-output">Token budget check</span>
+        </div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-icon" style="background: rgba(248,113,113,0.1);">✅</div>
+        <div class="agent-name">artemis-compliance-auditor</div>
+        <div class="agent-trigger">Triggered by: <code>/compliance</code></div>
+        <div class="agent-outputs">
+          <span class="agent-output">Ticket output audit</span>
+          <span class="agent-output">Verifies artifacts on disk</span>
+          <span class="agent-output">Read-only</span>
         </div>
       </div>
       <div class="agent-card">

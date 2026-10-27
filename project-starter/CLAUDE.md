@@ -119,7 +119,7 @@ RAW_PENDING=$(ls "${VAULT}/raw/"*.md 2>/dev/null | grep -v "_archive" | wc -l | 
 
 **Hooks are active in this project** (`.claude/hooks/`, wired in `.claude/settings.json`): they
 automatically remind/enforce the startup sequence, the vault-first rule, the navigation-assumption
-check, the server-side-blocker stop, and the GitHub Report format — so don't be surprised if a
+check, the server-side-blocker stop, the GitHub Report format, browser work staying out of subagents, reading the spec before reporting bugs, no Done card with open bugs, fresh reads before status claims, and evidence-file traces (full list: `.claude/hooks/README.md`) — so don't be surprised if a
 tool call is blocked or annotated with a reminder mid-session.
 
 ## Vault Location
@@ -161,6 +161,8 @@ Never add `login()` to `beforeEach` in spec files.
 | `/improve [test-file]` | Review + score test suite via subagent |
 | `/document [feature]` | Generate BA/SA developer reference doc (.md + .docx) via subagent |
 | `/audit` | 4-pass project health check via subagent |
+| `/compliance [title?]` | Audit completed tickets against `/ticket`'s mandatory outputs (read-only subagent) |
+| `/kanban-cleanup` | Archive stale ticket files and old Done cards from `_queue.md` |
 
 ## Feature Coverage Lifecycle
 

@@ -171,6 +171,8 @@ Pass a title (`/ticket [card title]`) to target a specific card instead of the t
 | `/bug [description]` | Deep failure analysis via subagent |
 | `/improve [spec-file]` | Review and score a test suite |
 | `/parse [file-or-text]` | Convert any doc (DOCX, prose, checklist) into structured TCs |
+| `/compliance [title?]` | Independent audit of completed tickets against `/ticket`'s required outputs |
+| `/kanban-cleanup` | Archive stale ticket files and old Done cards from `_queue.md` |
 | `/audit` | Health check: vault, memory, token budget, test coverage |
 | `/matrix` | Coverage gap matrix across all features |
 

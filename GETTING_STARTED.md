@@ -124,6 +124,8 @@ Artemis will:
 | `/explore [url]` | Autonomous exploratory testing |
 | `/context [feature]` | Generate TCs + specs from vault docs (zero browser) |
 | `/ticket [title?]` | Test the top `_queue.md` card (or a named one) end-to-end |
+| `/compliance [title?]` | Audit completed tickets against `/ticket`'s mandatory outputs |
+| `/kanban-cleanup` | Archive stale ticket files and old Done cards |
 | `/verify [feature]` | Re-run an existing spec, auto-fix broken selectors |
 | `/parse [file]` | Convert docs/text → structured test cases |
 | `/improve` | Review and improve existing test cases |

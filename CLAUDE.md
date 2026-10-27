@@ -261,6 +261,8 @@ If any test run, investigation script, or browser interaction produces a server-
 | `/explore [url]` | Browser discovery — harvest live selectors |
 | `/verify [feature]` | Run spec → auto-fix failures → record green date |
 | `/ticket [title?]` | Test the top `vault/_queue.md` card (or a named one) end-to-end |
+| `/compliance [title?]` | Independently audit completed tickets against `/ticket`'s mandatory outputs |
+| `/kanban-cleanup` | Archive stale ticket files and old Done cards |
 | `/run [TC-ID] [url]` | Execute specific TCs |
 | `/bug [description]` | Deep failure analysis via subagent |
 | `/improve [test-file]` | Review + score test suite via subagent |
