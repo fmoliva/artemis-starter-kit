@@ -113,7 +113,10 @@ if (input.screenshot_path) {
   const absPath = path.isAbsolute(input.screenshot_path)
     ? input.screenshot_path
     : path.join(__dirname, '..', input.screenshot_path);
-  if (fs.existsSync(absPath)) {
+  // Only read screenshots from inside the project dir — never arbitrary host paths.
+  const projectRoot = path.resolve(__dirname, '..');
+  const insideProject = path.resolve(absPath).startsWith(projectRoot + path.sep);
+  if (insideProject && fs.existsSync(absPath)) {
     try {
       const data     = fs.readFileSync(absPath).toString('base64');
       const fileSize = fs.statSync(absPath).size;

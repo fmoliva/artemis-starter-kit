@@ -60,7 +60,7 @@ for (const arg of process.argv.slice(2)) {
 }
 
 const format    = args.format    || 'compact';
-const limit     = parseInt(args.limit || '100', 10);
+const limit     = Math.max(1, parseInt(args.limit || '100', 10) || 100); // integer only — interpolated into SQL below
 const countOnly = args.count === true || args.count === 'true';
 
 // ─── Build Query ──────────────────────────────────────────────────────────────

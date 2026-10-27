@@ -1,6 +1,6 @@
 # Installs Node.js, Python 3, and Git if not already present.
 # Run this once before anything else.
-# Usage: powershell -ExecutionPolicy Bypass -File setup-prereqs.ps1
+# Usage: powershell -ExecutionPolicy RemoteSigned -File setup-prereqs.ps1
 #
 # Requires: Windows 10 1709+ or Windows 11 (winget is built in)
 
@@ -9,6 +9,8 @@ function Test-Command($cmd) {
 }
 
 function Install-WithWinget($id, $label) {
+    $reply = Read-Host "Install $label via winget? [y/N]"
+    if ($reply -notmatch '^[Yy]') { Write-Host "Skipped $label" -ForegroundColor Yellow; return }
     Write-Host "→  Installing $label..." -ForegroundColor Yellow
     winget install --id $id --accept-source-agreements --accept-package-agreements -e
     if ($LASTEXITCODE -eq 0) {

@@ -202,5 +202,5 @@ Artemis pauses at exactly 5 defined checkpoints. Outside these gates, it proceed
 
 **Rules:**
 - Never invent additional approval prompts mid-run
-- Never ask permission for navigation, screenshots, file writes, or DB logging
+- No need to ask before navigating the target app, taking screenshots, or writing files and DB logs inside the project; destructive or external actions still need user confirmation
 - If uncertain about scope, ask **before** Gate 1, not during execution

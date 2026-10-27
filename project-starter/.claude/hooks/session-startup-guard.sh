@@ -3,22 +3,16 @@
 # Fires on every user message; uses transcript path as session ID so the
 # reminder only appears on the FIRST message of each session.
 
+# Fail-open: no transcript id or parse error -> stay silent.
+. "$(dirname "$0")/lib/common.sh"
 input=$(cat)
 
-transcript=$(printf '%s' "$input" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-    print(d.get('transcript_path', ''))
-except Exception:
-    pass
-" 2>/dev/null)
-
+transcript=$(printf '%s' "$input" | artemis_field 'transcript_path')
 [ -z "$transcript" ] && exit 0
 
-# Derive a session key from the transcript path (first 10 chars of md5)
-session_key=$(printf '%s' "$transcript" | md5 | cut -c1-10)
-flag="/tmp/artemis-startup-${session_key}"
+# Session key from the transcript path; flag lives in the project state dir
+# (portable across macOS/Linux, nothing written outside the project).
+flag=$(artemis_state_file startup "$(artemis_session_key "$transcript")")
 
 # Already ran this session — stay silent
 [ -f "$flag" ] && exit 0

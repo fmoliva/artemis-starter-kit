@@ -1,6 +1,6 @@
 # Generates .mcp.json with the correct absolute paths for this machine.
 # Run this once after cloning, from the repo root.
-# Usage: powershell -ExecutionPolicy Bypass -File setup-mcp.ps1
+# Usage: powershell -ExecutionPolicy RemoteSigned -File setup-mcp.ps1
 
 $RepoRoot = (Get-Location).Path
 $ArtemisProject = Join-Path $RepoRoot ".artemis-project"

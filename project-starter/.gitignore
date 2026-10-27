@@ -4,3 +4,6 @@ vault/
 playwright/.auth/
 playwright-report/
 test-results/
+
+# Hook session state (written by .claude/hooks)
+.claude/.state/

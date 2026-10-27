@@ -17,7 +17,7 @@ or `/explore`.
 
 **Preconditions:**
 - [State that must be true before this test runs]
-- [e.g., "User is logged in as a nurse", "Patient Silva, Maria exists in the system"]
+- [e.g., "User is logged in as a nurse", "Patient Doe, Jane exists in the system"]
 
 **Steps:**
 1. [Specific action with specific values — e.g., "Navigate to /medical-history"]

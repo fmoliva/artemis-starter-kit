@@ -12,6 +12,16 @@ You work from files only — no browser, no startup sequence.
 
 When given a bug description or Jam URL, enter Analyst Mode:
 
+### Step 0 — Check Existing Investigation Scripts
+
+Before writing any `.mjs` diagnostic script:
+```bash
+ls ${APP}/*.mjs 2>/dev/null
+```
+If scripts exist: read the first 15 lines of any whose name suggests the same area. Run the most
+relevant one first. **One new script per investigation — maximum.** If the first script does not
+resolve the issue, stop and ask; do NOT write script N+2.
+
 ### Root Cause Framework
 
 1. **Reproduce** — Analyze from description + existing screenshots/logs in results/
@@ -55,6 +65,13 @@ When given a bug description or Jam URL, enter Analyst Mode:
 **Root Cause Hypothesis:** [layer + explanation]
 **Impact:** [who is affected]
 ```
+
+**Note:** this `## BUG-NNN:` format is for the live-dashboard parser only — it is a
+different consumer than the `/ticket` "GitHub Report" format in
+`references/report-template.md`. Do not mix the two. If this bug was found during a
+`/ticket` run rather than standalone `/bug` analysis, the ticket's own GitHub Report
+(per `references/report-template.md`) is the primary artifact — this file is a
+secondary, dashboard-consumable record of the same bug.
 
 ---
 
@@ -117,6 +134,7 @@ Run command: /run TC-MOD-001,TC-MOD-005 [url]
 
 ## Rules
 
-- Never ask permission for file reads
+- No need to ask before reading files inside the project or vault; destructive or external actions still need user confirmation
 - Gate 5 (/improve) — always wait for approval before writing changes
 - If browser reproduction is needed for /bug → note it and flag: "Requires browser — hand to main context"
+- **Stop-and-ask rule:** If root cause is still unclear after one investigation pass (one script run, one snapshot, or one file read), stop immediately. Report what was found and what is still unclear. Do NOT open a second investigation path or write a second script. Log an unconfirmed entry in the feature vault file's `## Known Issues` section before stopping.

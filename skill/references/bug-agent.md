@@ -125,4 +125,4 @@ Run command: /run TC-MOD-001,TC-MOD-005,... [url]
 | **Gate 5** | Improvement changes (`/improve`) | Approve proposed changes before writing |
 | **Gate 6** | Git push (teardown T4) | Approve commit + push |
 
-Never invent additional prompts. Never ask permission for file reads or analysis.
+Never invent additional prompts. No need to ask before reading files or analysing them inside the project; destructive or external actions still need user confirmation.

@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Installs Node.js, Python 3, and Git if not already present.
 # Run this once before anything else.
-# Usage: bash setup-prereqs.sh
+# Usage: bash setup-prereqs.sh        (asks before installing anything)
+#        bash setup-prereqs.sh --yes  (skip the confirmation prompt)
+#
+# Only installs missing tools, using your OS package manager (brew / apt / dnf).
+# It never pipes a downloaded script into a shell.
 
 set -e
 
@@ -12,15 +16,28 @@ NC='\033[0m'
 ok()   { echo -e "${GREEN}✅ $1${NC}"; }
 info() { echo -e "${YELLOW}→  $1${NC}"; }
 
+# Consent gate: package installs (some with sudo) only run after confirmation.
+if [[ "${1:-}" != "--yes" ]]; then
+  missing=()
+  for t in node python3 git; do command -v "$t" >/dev/null 2>&1 || missing+=("$t"); done
+  if [ ${#missing[@]} -eq 0 ]; then
+    echo "✅ node, python3 and git are already installed — nothing to do."; exit 0
+  fi
+  echo "Missing: ${missing[*]}"
+  echo "This script will install them with your OS package manager (may use sudo)."
+  read -r -p "Continue? [y/N] " reply
+  [[ "$reply" =~ ^[Yy]$ ]] || { echo "Aborted. Install them manually and re-run."; exit 1; }
+fi
+
 # ─── macOS ────────────────────────────────────────────────────────────────────
 if [[ "$OSTYPE" == "darwin"* ]]; then
 
   # Homebrew
   if ! command -v brew >/dev/null 2>&1; then
-    info "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    # Add brew to PATH for Apple Silicon
-    eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || true
+    echo "⚠  Homebrew is required but not installed."
+    echo "   Install it from https://brew.sh (review the command there, then run it yourself),"
+    echo "   then re-run this script."
+    exit 1
   else
     ok "Homebrew already installed"
   fi
@@ -55,11 +72,10 @@ elif command -v apt-get >/dev/null 2>&1; then
   info "Updating package list..."
   sudo apt-get update -qq
 
-  # Node.js (via NodeSource for a current LTS version)
+  # Node.js (distro package; if it is older than Node 18, install a newer one from https://nodejs.org)
   if ! command -v node >/dev/null 2>&1; then
     info "Installing Node.js..."
-    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+    sudo apt-get install -y nodejs npm
   else
     ok "Node.js already installed ($(node --version))"
   fi

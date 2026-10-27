@@ -24,6 +24,7 @@ Read `.artemis-project`. If line 2 is `tech_stack=unknown` (or the line is absen
 6. Run conditional scaffolding (same as `/init` Step 3a) — copy templates on the fly:
    ```bash
    SKILL_DIR=~/.claude/skills/artemis
+   [ -d "$SKILL_DIR" ] || SKILL_DIR="./.claude/skills/artemis"
    APP=$(cat .artemis-project | head -1)
    if [[ "$DETECTED_STACK" == angular* ]]; then
      cp "$SKILL_DIR/templates/tests/fixtures/angular-stable.ts"  "$APP/tests/fixtures/"

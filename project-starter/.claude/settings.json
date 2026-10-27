@@ -32,6 +32,36 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "^mcp__playwright__",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/subagent-browser-block.sh\"'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/report-write-guard.sh\"'",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/done-bug-gate.sh\"'",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/state-assertion-guard.sh\"'",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -52,6 +82,11 @@
             "type": "command",
             "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/report-format-guard.sh\"'",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/evidence-trace-check.sh\"'",
+            "timeout": 10
           }
         ]
       },
@@ -61,6 +96,31 @@
           {
             "type": "command",
             "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/report-format-guard.sh\"'",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/evidence-trace-check.sh\"'",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/reference-read-logger.sh\"'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd) && \"$root/.claude/hooks/recent-read-logger.sh\"'",
             "timeout": 5
           }
         ]

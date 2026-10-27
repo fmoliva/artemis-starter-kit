@@ -120,6 +120,6 @@ After writing the report, print: `Audit complete → [APP]/results/audits/audit-
 ## Rules
 
 - Never delete any files — report only
-- Never ask for permission to read files
+- No need to ask before reading files inside the project or vault; destructive or external actions still need user confirmation
 - If a file is missing that was expected, note it as a gap (not an error)
 - Keep the report scannable — use tables, not prose paragraphs

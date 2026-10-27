@@ -138,7 +138,7 @@ import { handleLocationDialog, changeLocationTo, gotoModule } from '../helpers/n
 |----------|----------------|
 | `clickDialogButton(page, text)` | Clicks inside a `p-dialog` regardless of element type (`<a>`, `<div>`, `<button>`) |
 | `selectFromMultiselect(page, label, options[])` | Opens a `p-multiselect` panel, selects by text, closes with Escape |
-| `fillCascadingDropdowns(page, level1, level2, level3)` | Cascading dependent dropdowns (e.g. country → state → city): selects level 1 → `waitForResponse` → level 2 → `waitForResponse` → level 3 |
+| `fillCascadingDropdowns(page, [l1, l2, l3])` | Cascading dependent dropdowns (e.g. country → state → city); each level is `{ control, value, responseUrlPart }` (last level omits `responseUrlPart`): selects level 1 → `waitForResponse` → level 2 → `waitForResponse` → level 3 |
 | `waitForPrimeNGMask(page)` | Waits for `.p-dialog-mask` to detach; force-removes it if stuck |
 | `getTableRow(page, columnName, cellValue)` | Returns the `<tr>` locator where `columnName`'s cell equals `cellValue` |
 

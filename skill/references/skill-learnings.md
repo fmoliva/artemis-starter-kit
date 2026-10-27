@@ -442,6 +442,85 @@ column list, not the prose inside each card, for what state that task is actuall
 
 ---
 
+### Proxy signal is not ground truth — name the signal before any state claim
+
+**Type:** Behavioral rule (umbrella — applies above the specific cases in this file)
+**Applies to:** All commands — any moment a conclusion is drawn about app or record state
+**Rule:** Before stating or acting on a claim about state ("no active record," "field is
+filled," "item is a draft," "option is missing"), name which signal the claim rests on and
+check whether the vault documents a MORE reliable signal for that exact claim.
+**Why:** The same failure recurs in different costumes: a button's mere presence standing
+in for a state, a guessed URL redirect standing in for a permission check, accessibility-tree
+text standing in for "this is visible," a successful `fill()` call standing in for "the row
+has a value," one immediate snapshot standing in for "the option is truly absent." Each is
+caught only after the fact; hooks catch only claim shapes someone already named.
+**How to apply:** (1) State the claim in one sentence. (2) Name the signal supporting it.
+(3) Grep the vault for a more direct signal (a documented navigation result, a real
+screenshot, a DOM `.value` read) and use that instead of whatever is already on screen.
+(4) If none exists, report the claim as inferred-only, not settled fact.
+
+### "Fresh test" and "full field-by-field retest" are different scopes
+
+**Type:** Behavioral rule
+**Applies to:** `/ticket`, `/verify` — any retest of a card that was moved back to Pending
+**Rule:** "Fresh test" / "ignore prior findings" means re-verify live, from scratch, the
+specific claims or bugs named — never trust a prior vault verdict. It does NOT by itself
+mean redo every section of the form. "Full field-by-field retest" means redo coverage of
+every section and field regardless of which bugs prompted the retest.
+**Why:** A retest scoped (reasonably) to three named bugs skipped ten sections the user
+expected to be re-covered. The execution matched the scope declared — the gap was which
+instruction the wording invoked.
+**How to apply:** State the chosen scope explicitly before starting ("re-verifying the
+named bugs only, not the full form — say so if you want the whole form"). If unsure which
+is meant, ask once; a question costs a turn, a wrong guess costs a redo.
+
+### "Required: No" means Save won't block — it does not mean skip testing
+
+**Type:** Behavioral rule
+**Applies to:** All form / data-entry tickets, any field-by-field pass
+**Rule:** Every field in a ticket's field spec must be exercised at least once (value
+entered, option selected, toggle flipped), required or not. The Required column answers
+"does Save block when blank," not "does QA test this."
+**Why:** A section was scored "9/9 Pass" while an optional radio was never selected.
+Bugs hide in optional fields as often as required ones — validation attention skews to
+required-field enforcement.
+**How to apply:** A field may end a round blank only when blank IS the scenario (e.g. a
+dependent field correctly moot because its parent is "No"). Section scores count only
+exercised fields; an untouched field is reported as "Not Exercised," so 8 of 9 touched is
+reported as 8/9 with the ninth named — never rounded up with the gap buried in prose.
+Field-by-field is the default for any form-shaped scope: list it as a scope line up front
+rather than waiting to be asked, and give every named field its own row in the write-up.
+
+### Missing source data is a setup step, not a result
+
+**Type:** Behavioral rule
+**Applies to:** Any test of pre-populated, read-only, or derived fields
+**Rule:** If a field can't be verified because the test record lacks the upstream data,
+add the data (via the app's normal edit screens), confirm it persisted, then create a
+brand-new dependent record — never report "not retestable." Before declaring a scenario
+needs a special record type, check the vault's feature history and `_test-data.md` for one
+that already fits.
+**Mirror image:** before filing "field should be disabled / read-only / pre-populated but
+isn't," check whether the source field actually has a value. An editable-but-empty field
+can be correct empty-state behavior; the lock may be conditional on source data existing.
+New source data does not retroactively apply to already-created records.
+
+### Dev-facing reports: overwrite the current-state block, never accumulate retest prose
+
+**Type:** Behavioral rule
+**Applies to:** Every command that writes a standalone bug/validation report or a vault
+note "current status" section
+**Rule:** On every retest, rewrite the standalone report in full per `report-template.md`
+and mirror that exact block (not a paraphrase) at the top of the linked vault note. Do not
+append per-round prose, a "Retest History" section, or a "CORRECTION: ..." paragraph; to
+correct a prior conclusion, replace the block. Preserve genuinely needed history in the
+feature's vault file under a dated heading. Use ONE test record per report and one value
+per table cell — never "A: x / B: y".
+**Why:** Appending prose per round produced reports reviewers could not read; each
+"fix" that allowed a history section below the block was itself re-violated.
+
+---
+
 ## Framework Patterns
 
 Interaction patterns discovered for specific frameworks/component libraries that apply

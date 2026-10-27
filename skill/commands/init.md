@@ -14,7 +14,7 @@ Scaffold a new Artemis project folder with the live dashboard server, all requir
 ## What This Command Does
 
 1. Creates `[app-name]/` directory with required subdirectories
-2. Copies all server scripts from `~/.claude/skills/artemis/templates/` into `[app-name]/`
+2. Copies all server scripts from the skill's `templates/` directory into `[app-name]/` (global install at `~/.claude/skills/artemis/` if present, else the project-relative `.claude/skills/artemis/` copy)
 3. Writes `.artemis-project` file in the current directory (enables all other Artemis commands to auto-resolve paths)
 4. Creates `[app-name]/app-guide.md` from the examples template
 5. Runs `npm install` in `[app-name]/`
@@ -55,6 +55,7 @@ mkdir -p "$APP_NAME/web"
 
 ```bash
 SKILL_DIR=~/.claude/skills/artemis
+[ -d "$SKILL_DIR" ] || SKILL_DIR="./.claude/skills/artemis"
 cp "$SKILL_DIR/templates/server.js"                        "$APP_NAME/server.js"
 cp "$SKILL_DIR/templates/package.json"                     "$APP_NAME/package.json"
 cp "$SKILL_DIR/templates/scripts/db.js"                    "$APP_NAME/scripts/db.js"
@@ -75,7 +76,7 @@ echo "$APP_NAME" > .artemis-project
 
 ### Step 5 — Create app-guide.md from template
 
-Copy `~/.claude/skills/artemis/examples/app-guide-template.md` to `[app-name]/app-guide.md`.
+Copy `$SKILL_DIR/examples/app-guide-template.md` (see Step 3 for `SKILL_DIR` resolution) to `[app-name]/app-guide.md`.
 If the user provided a URL, pre-fill the `**Base URL:**` field in the copied file.
 
 ### Step 6 — Run npm install
@@ -112,6 +113,7 @@ VAULT_PATH="[resolved path, ~ expanded to $HOME]"
 mkdir -p "$VAULT_PATH"
 
 SKILL_DIR=~/.claude/skills/artemis
+[ -d "$SKILL_DIR" ] || SKILL_DIR="./.claude/skills/artemis"
 for f in _app-overview.md _env-matrix.md _invariants.md _navigation-flow.md _pipeline.md _test-data.md _queue.md known-bugs.md; do
   cp "$SKILL_DIR/templates/vault/$f" "$VAULT_PATH/$f"
 done
@@ -166,4 +168,4 @@ Dashboard will be available at http://localhost:7373 when you run your first tes
   If yes → overwrite. If no → abort.
 - **`[app-name]` directory already exists:** Continue without error — `mkdir -p` is safe. This allows re-running `/init` to refresh scripts in an existing project.
 - **`npm install` fails:** Print the error and tell the user to check Node.js ≥ 18 is installed.
-- **Templates directory missing:** Print: `Templates not found at ~/.claude/skills/artemis/templates/. Re-clone the skill repo.`
+- **Templates directory missing:** Print: `Templates not found at $SKILL_DIR/templates/ (checked ~/.claude/skills/artemis and ./.claude/skills/artemis). Re-clone the skill repo.`

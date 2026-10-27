@@ -16,6 +16,10 @@ const url  = require('url');
 // ─── Paths ──────────────────────────────────────────────────────────────────
 
 const PORT        = 7373;
+// Bind to loopback by default. Set HOST=0.0.0.0 to share on a LAN (then TEAM_TOKEN is required).
+const HOST        = process.env.HOST || '127.0.0.1';
+// CORS is limited to the local dashboard origin. Override with CORS_ORIGIN if you serve it elsewhere.
+const CORS_ORIGIN = process.env.CORS_ORIGIN || `http://localhost:${PORT}`;
 const ROOT        = __dirname;
 const RESULTS_DIR = path.join(ROOT, 'results');
 const BUGS_DIR    = path.join(RESULTS_DIR, 'bugs');
@@ -30,6 +34,10 @@ const WEB_DIR      = path.join(ROOT, 'web');
 // ─── Artemis Team — Auth + Trigger.dev client ────────────────────────────────
 
 const TEAM_TOKEN        = process.env.TEAM_TOKEN || null;
+if (HOST !== '127.0.0.1' && HOST !== 'localhost' && !process.env.TEAM_TOKEN) {
+  console.error('Refusing to listen on a non-loopback HOST without TEAM_TOKEN set.');
+  process.exit(1);
+}
 const TRIGGER_SECRET    = process.env.TRIGGER_SECRET_KEY || null;
 const TRIGGER_API_URL   = process.env.TRIGGER_API_URL || 'https://api.trigger.dev';
 const SERVER_URL        = process.env.SERVER_URL || `http://localhost:${7373}`;
@@ -83,7 +91,7 @@ function handleSse(req, res) {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': CORS_ORIGIN,
   });
   res.write('retry: 3000\n\n');
   res.write(`event: connected\ndata: ${JSON.stringify({ ts: Date.now() })}\n\n`);
@@ -97,7 +105,7 @@ function sendJson(res, data, status = 200) {
   const body = JSON.stringify(data);
   res.writeHead(status, {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': CORS_ORIGIN,
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Cache-Control': 'no-cache',
   });
@@ -519,9 +527,9 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': CORS_ORIGIN,
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     });
     return res.end();
   }
@@ -810,7 +818,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(200, {
               'Content-Type': mime,
               'Cache-Control': 'public, max-age=86400',
-              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Origin': CORS_ORIGIN,
             });
             return res.end(Buffer.from(row.data, 'base64'));
           }
@@ -836,7 +844,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(200, {
               'Content-Type': mime,
               'Cache-Control': 'public, max-age=3600',
-              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Origin': CORS_ORIGIN,
             });
             return fs.createReadStream(filePath).pipe(res);
           }
@@ -851,7 +859,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(200, {
               'Content-Type': mime,
               'Cache-Control': 'public, max-age=3600',
-              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Origin': CORS_ORIGIN,
             });
             return res.end(Buffer.from(row.data, 'base64'));
           }
@@ -868,7 +876,7 @@ const server = http.createServer(async (req, res) => {
                      : ext === '.js'   ? 'application/javascript'
                      : ext === '.css'  ? 'text/css'
                      : 'text/plain';
-          res.writeHead(200, { 'Content-Type': mime, 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(200, { 'Content-Type': mime, 'Access-Control-Allow-Origin': CORS_ORIGIN });
           return fs.createReadStream(safeFile).pipe(res);
         }
       }
@@ -878,7 +886,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
   console.log('');
   console.log('  ✦ Artemis Live Server');
   console.log(`  → Dashboard:  http://localhost:${PORT}`);

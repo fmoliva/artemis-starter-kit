@@ -11,7 +11,7 @@ SETUP_NEEDED=0
 if [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "linux"* ]]; then
   PREREQS_CMD="bash setup-prereqs.sh"
 elif [[ "$OS" == "Windows_NT" ]] || command -v powershell.exe >/dev/null 2>&1; then
-  PREREQS_CMD="powershell -ExecutionPolicy Bypass -File setup-prereqs.ps1"
+  PREREQS_CMD="powershell -ExecutionPolicy RemoteSigned -File setup-prereqs.ps1"
 else
   PREREQS_CMD=""  # Unknown — will ask user below
 fi

@@ -50,3 +50,6 @@ Delete this comment block once you've read it — it's setup guidance, not part 
 
 ## 🚫 Blocked
 
+## 🗄 Archive
+
+<!-- /kanban-cleanup moves old Done cards here -->

@@ -63,13 +63,16 @@ mkdir -p "${APP_NAME}"/{test-cases,tests,results/{bugs,screenshots,observations,
 echo "$APP_NAME" > .artemis-project
 
 # Copy result scripts from skill templates
-cp ~/.claude/skills/artemis/templates/scripts/write-result.js "${APP_NAME}/scripts/"
-cp ~/.claude/skills/artemis/templates/scripts/write-bug.js "${APP_NAME}/scripts/"
-cp ~/.claude/skills/artemis/templates/scripts/query-tcs.js "${APP_NAME}/scripts/"
-cp ~/.claude/skills/artemis/templates/scripts/setup-db.js "${APP_NAME}/scripts/"
-cp ~/.claude/skills/artemis/templates/scripts/migrate-tcs.js "${APP_NAME}/scripts/"
-cp ~/.claude/skills/artemis/templates/scripts/db.js "${APP_NAME}/scripts/"
-cp ~/.claude/skills/artemis/templates/scripts/split-data.js "${APP_NAME}/scripts/"
+# SKILL_DIR: prefer a global install if present, else fall back to the project-relative copy
+SKILL_DIR=~/.claude/skills/artemis
+[ -d "$SKILL_DIR" ] || SKILL_DIR="./.claude/skills/artemis"
+cp "$SKILL_DIR/templates/scripts/write-result.js" "${APP_NAME}/scripts/"
+cp "$SKILL_DIR/templates/scripts/write-bug.js" "${APP_NAME}/scripts/"
+cp "$SKILL_DIR/templates/scripts/query-tcs.js" "${APP_NAME}/scripts/"
+cp "$SKILL_DIR/templates/scripts/setup-db.js" "${APP_NAME}/scripts/"
+cp "$SKILL_DIR/templates/scripts/migrate-tcs.js" "${APP_NAME}/scripts/"
+cp "$SKILL_DIR/templates/scripts/db.js" "${APP_NAME}/scripts/"
+cp "$SKILL_DIR/templates/scripts/split-data.js" "${APP_NAME}/scripts/"
 
 # Write .env (credentials left blank — user fills them in)
 cat > "${APP_NAME}/.env" << EOF

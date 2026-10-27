@@ -29,7 +29,7 @@ bash setup-prereqs.sh
 
 **Windows (PowerShell):**
 ```powershell
-powershell -ExecutionPolicy Bypass -File setup-prereqs.ps1
+powershell -ExecutionPolicy RemoteSigned -File setup-prereqs.ps1
 ```
 
 Install these two manually (not automated):

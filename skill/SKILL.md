@@ -43,6 +43,8 @@ or `mcp__Claude_in_Chrome__*` — these interfere with the user's Chrome session
 | `/audit` | Project health check — folder, vault, memory, token budget | _(Agent Dispatch below)_ |
 | `/document [module/feature]` | Generate BA/SA developer reference doc (.md + .docx) from vault | _(Agent Dispatch below)_ |
 | `/ticket [title?]` | Sprint QA — test ticket scope + edge cases → write/update TCs + spec → confirm green run + vault update | `commands/ticket.md` |
+| `/compliance [ticket?]` | Audit completed tickets against every MANDATORY `/ticket` output (independent backstop) | `commands/compliance.md` |
+| `/kanban-cleanup [done?]` | Archive off-board ticket descriptions/attachments; optionally sweep stale Done cards into `_queue.md`'s Archive | `commands/kanban-cleanup.md` |
 
 **Loading rule:** Browser commands load their reference doc. Analysis commands (`/bug`, `/improve`, `/scope`, `/parse`, `/audit`) use Agent Dispatch — do NOT load reference docs in main context.
 
@@ -221,6 +223,8 @@ T4: Git push gate — if test-cases/ or bugs/ changed, ask user to push
 Analysis commands run as isolated subagents to minimize token usage in the main context.
 Each subagent receives only the context it needs — no browser, no startup sequence.
 
+`[PROJECT]` below means the current working directory (the project root containing `.artemis-project`). When the skill is installed project-relative rather than globally at `~/.claude/skills/artemis/`, use `[PROJECT]/.claude/skills/artemis/`. Give subagents an absolute path, not a bare relative one — a spawned subagent's cwd is not guaranteed to match the parent session's.
+
 Read `APP=$(cat .artemis-project 2>/dev/null)` first to get the app name, then spawn:
 
 ### `/bug [description]`
@@ -228,7 +232,7 @@ Read `APP=$(cat .artemis-project 2>/dev/null)` first to get the app name, then s
 ```
 Spawn Explore subagent:
   Context: APP name + bug description
-  Read: ~/.claude/skills/artemis/references/bug-agent.md
+  Read: [PROJECT]/.claude/skills/artemis/references/bug-agent.md
   Read: [APP]/results/bugs/ (existing reports for reference)
   Read: [APP]/test-cases/ (linked TC if applicable)
   Task: Analyze the failure, classify layer + severity, write bug report to
@@ -242,7 +246,7 @@ Spawn Explore subagent:
 ```
 Spawn Explore subagent:
   Context: path to test file
-  Read: ~/.claude/skills/artemis/references/bug-agent.md
+  Read: [PROJECT]/.claude/skills/artemis/references/bug-agent.md
   Read: [test-file]
   Task: Score on 5 axes (coverage, selectors, independence, assertions, maintainability).
         Present improvement plan. Gate 5: wait for user approval before writing changes.
@@ -253,7 +257,7 @@ Spawn Explore subagent:
 ```
 Spawn Explore subagent:
   Context: APP name + feature description
-  Read: ~/.claude/skills/artemis/references/bug-agent.md
+  Read: [PROJECT]/.claude/skills/artemis/references/bug-agent.md
   Read: [APP]/test-cases/INDEX.md → relevant module files
   Task: Score every TC for relevance to the description. Select top TCs (max 30).
         Print ranked list + pre-filled /run command.
@@ -264,7 +268,7 @@ Spawn Explore subagent:
 ```
 Spawn Explore subagent:
   Context: APP name + input file/text
-  Read: ~/.claude/skills/artemis/references/explore-agent.md
+  Read: [PROJECT]/.claude/skills/artemis/references/explore-agent.md
   Task: Parse input into structured TCs using TC heading format (### TC-PREFIX-NNN).
         Gate 2: present generated TCs for user approval before saving.
         After approval: write to test-cases/ hierarchy, run migrate-tcs.js.

@@ -48,6 +48,11 @@ block below, not referenced separately or placed outside the fence.
 **Test Data:** [record/account used for this round — name, ID, or other identifier]
 **Tester:** Artemis
 
+> **Evidence Tier vs. row-level traceability are NOT the same thing.** Tier says which
+> layer of the app was checked (UI-only vs. UI + API/DB); it never lowers the bar on how
+> rigorously that layer was checked. Every row still needs the functional-persistence
+> discipline and the per-section Evidence citation below, regardless of Tier.
+
 ### Bugs Found
 
 | # | Bug ID | Summary | Severity |
@@ -65,11 +70,16 @@ _or "None" if no bugs found._
 
 ### Field-by-Field — [Section name]
 
+**Evidence:** [results/evidence/<ticket-slug>/<section-slug>.json|.txt — raw DOM
+extraction, API dump, or list-diff output the rows below were transcribed from. Every
+section table needs one, even if brief. "Present in the DOM/option list" is NOT the same
+claim as "functionally persists".]
+
 | # | Field | Expected (per spec) | Actual (live) | Result |
 |---|-------|---------------------|----------------|--------|
 | 1 | [field name] | [expected] | [observed] | ✅ / ❌ |
 
-_Repeat this table once per section — never collapse a large section (e.g. 200+ fields)
+_Repeat this table (with its own Evidence line) once per section — never collapse a large section (e.g. 200+ fields)
 into one aggregate row. If part of a repeating grid wasn't individually re-verified,
 name that gap explicitly in its own row — never let it hide inside a pass count._
 
@@ -100,6 +110,66 @@ validation, save/submit persistence, and prepop state+value where applicable. Th
 applies to the write-up as much as the browser execution: a section tested
 field-by-field in the browser but summarized as one aggregate line in the report
 ("251/251 ✅") does not satisfy this rule.
+
+**Mandatory column set for EVERY Field-by-Field table — no exceptions, regardless of
+section size or field type:**
+
+```
+| # | Field | Expected (per spec) | Actual (live) | Result |
+```
+
+A bare `| # | Field | Result |` table is NOT an acceptable shortcut, even for sections that
+"just" toggle a checkbox or pick a dropdown option — collapsing Expected/Actual into the
+Result cell hides whether the value was checked against the spec or merely typed and
+observed not to vanish.
+
+- Even a plain free-text field with no special rule needs an Expected value
+  (`[type/options per spec], no auto-populate` is enough) so a reviewer can see the
+  judgment call was made, not skipped.
+- A **Pass (✅) row carries zero prose** — the Result cell is the bare symbol. Any
+  reasoning or caveat goes in the Expected or Actual cell.
+
+**Integration / data-mapping tickets (Tier B) — extra columns:** when the scope is
+whether data saved in one place correctly reaches another (a form's saved payload ->
+a downstream table, report, or sync target), append columns after `Result` so a
+backend dev can see exactly which field breaks at the integration layer:
+
+```
+| ... | Result | Source Key | Saved Value (source) | Downstream Value |
+```
+
+- **Source Key** — the real key as it appears in the saved payload (normalized to the
+  payload's own casing/path convention; for repeating/array fields, the full indexed
+  path, e.g. `entries[0].year`). Never paste a spreadsheet's display text as if it were a
+  key.
+- **Saved Value (source)** — the literal value at that key in a real saved record;
+  reuse a payload already captured this session instead of pulling again. Distinguish
+  concrete value / `null` (key exists, empty on this record — not automatically a bug) /
+  "not in payload" (lives on a parent/master record) / `—` (mapping defines no key).
+- A row where the source holds a real value but the downstream value is blank is
+  unambiguous: saved correctly, sync/trigger not picking it up. Without these columns a
+  blank downstream cell is ambiguous between a save bug, a sync bug, and a mapping error.
+- If no field-mapping document was supplied, add a Clarifications Needed row asking for
+  it rather than fabricating keys from field labels — a guessed key looks authoritative.
+- Treat the mapping document as a QA target too: if a row's key breaks the pattern of
+  its siblings, flag it as a mapping data-quality finding rather than silently
+  propagating it.
+
+**Evidence artifact requirement (every Field-by-Field section):** each block must carry
+an `**Evidence:** [path]` line naming a real file under `results/evidence/<ticket-slug>/`
+(create the directory if missing) that the section's rows were transcribed from — a raw
+DOM extraction, API/DB pull, or list-diff output. One file can back every row in that
+section; it is a per-section batch artifact, not a per-row screenshot. Shape checks
+alone (a row exists per item, correctly formatted) cannot distinguish a genuinely tested
+row from a plausible-looking fabricated one; the Evidence line gives a reviewer something
+concrete to spot-check values against.
+
+- A raw JSON/text dump is sufficient and preferred (cheaper than a screenshot per field).
+- If a section genuinely has no artifact-producing check (e.g. one manual visual
+  confirmation), say so explicitly: `**Evidence:** manual visual check only — see
+  screenshot [path]`. An honest limited-evidence statement is acceptable; a missing
+  Evidence line is not.
+- This does not replace per-item screenshots for visual/interactive state.
 
 ## Reporting discipline (every retest)
 

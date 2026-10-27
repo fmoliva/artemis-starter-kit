@@ -79,6 +79,32 @@ find "${VAULT}" -maxdepth 1 -name "*.md" | xargs grep -l "^# ${TITLE}" 2>/dev/nu
 - If the file is missing or has no content beyond the title: stop and ask the user what to test. Do not guess from the card title alone.
 - Do NOT summarize or truncate the note content internally — every requirement listed is a test item unless the user explicitly removes it.
 
+### 0.2b — Read every referenced doc (HARD GATE)
+
+**Do NOT form or assert any bug finding until every requirements/spec/mapping/mockup reference for this ticket has been opened and read.**
+
+- Scan the note (0.2) and the card (0.1) for any link, path, or mention of an external
+  reference — requirements doc, spec, field-mapping file (CSV or otherwise), wireframe,
+  mockup, or dev-provided tracking file. Open and read each one fully before continuing.
+- If a referenced doc is inaccessible (broken link, permissions, not found): move the ticket
+  to `🚫 Blocked`. Do not substitute a proxy comparison (e.g. live API introspection standing
+  in for a missing mapping doc) and do not guess at intended behavior instead.
+- The recurring failure this prevents: flagging a bug from assumption, or from a live-app/API
+  read alone, without checking it against the ticket's own reference docs first. Findings made
+  before this gate is satisfied are not valid — re-verify them against the reference docs
+  before they appear in any report.
+- If this project has a hook that logs reference-doc reads and blocks bug-asserting report
+  writes when none were read, it only checks that *a* plausible file was read — read the docs
+  for real.
+
+### 0.2c — Deliverable-template gate (HARD GATE, export/file-output tickets only)
+
+If the ticket's deliverable is a generated file (title contains "Export", "Report", or "Download",
+or the note has a file-format requirement), the Requirements must **link or attach the expected
+template/sample file**. If that line is empty or the file is missing: move the card to
+`🚫 Blocked`, write the stub, and **do no testing at all** (no browser, no exports). Do not
+substitute the live table headers or a mapping file for the expected file format.
+
 ### 0.3 — Scope declaration (autonomous — no user confirmation needed)
 
 After reading the note file, print the scope and proceed immediately:
@@ -193,6 +219,17 @@ cat "${APP}/results/artemis-learnings.md" 2>/dev/null | grep -A3 "${FEATURE}"
 If a prior entry shows a confirmed blocker (server bug, permission requirement, test-data issue),
 treat it as authoritative context before running any tests.
 
+### 1.6 — Field Count Declaration (MANDATORY for any form / multi-field ticket)
+
+Before any field interaction, count the data rows in the ticket note's own field-specification
+table(s) (every `| Field Label | ... |` row across all sections, excluding header/separator
+rows) and state the count in the scope output. Use the ticket's own table as the source of
+truth — do not estimate it from the rendered page. At the end of Phase 2, compare the number of
+fields actually exercised against this count; any gap must be reported as `⬜ Untested`, not
+omitted. Exercising a handful of fields and then saving/finalizing a large form with most
+fields untouched is the failure this guards against. (If the project has a field-fill guard
+hook that reads an expected-count file, write the count where the hook expects it.)
+
 ---
 
 ## Phase 2 — Targeted Validation
@@ -247,6 +284,15 @@ Examples that REQUIRE a screenshot:
 - Visual state items: 1 screenshot per item (pass or fail)
 - Non-visual items (API calls, text content, data presence): snapshot on FAIL only
 - Share a browser session across items where the feature page is the same
+
+**Evidence artifact per Field-by-Field section (mandatory when scope touches a form or list):**
+When validating a named-item list (options, dropdown values, checkboxes, or any other section
+that will become its own Field-by-Field table in the report), save the raw comparison data to
+`${APP}/results/evidence/<ticket-slug>/<section-slug>.json` (or `.txt`) as you go — e.g. the DOM
+extraction, the API response used for comparison, or the list-diff output itself. Do this at
+validation time, not retroactively when writing the report; a file assembled after the fact
+from memory defeats the point. The report's Field-by-Field section cites it with an
+`**Evidence:** [path]` line.
 
 ### 2.3 — Server-Side Blocker Check
 
@@ -394,14 +440,17 @@ Edit `${VAULT}/_queue.md`:
   ticket could not be completed: move card to a parked "issues found" state if your board
   has one, instead of leaving it in `🔄 In Progress`
 
-Append a completion note on the card:
+**Card note stays short — MANDATORY.** The card is a pointer, not a report. Replace any longer
+in-progress notes (e.g. 0.4's `Started:` line) with only this completion stub:
 ```
   - Started: [start date] | Completed: [today]
-  - [Phase 2 summary: N/N ticket items validated]
-  - [Phase 3 summary: N pass / N fail across N scenarios]
-  - [Bug IDs logged, or "No bugs found"]
-  - [Spec updated: yes/no]
+  - [Bugs Found summary line: bug IDs + severities, or "No bugs found"]
+  - Full write-up: [[Title]] → Report + Session Notes
 ```
+Do **not** put phase scoreboards, root-cause narrative, or vault-update lists on the card —
+those belong in the note file's Session Notes (5.2b). A card that accumulates paragraph-length
+bullets becomes unreadable and duplicates content that already lives, better organized, in
+the note.
 
 ### 5.2 — Report (MANDATORY)
 
@@ -420,6 +469,74 @@ On a retest, **overwrite** this section in place — never append a second copy 
 If this project has a report-format validation hook or similar automated check, it may reject the
 write if the structure doesn't match — treat that as a signal to re-check against
 `references/report-template.md`, not to work around the check.
+
+**Transcribe Field-by-Field rows FROM the Phase 2.2 evidence artifact — never from the
+ticket's requirements/field-specification table.** The ordering matters:
+
+1. Extract the real data from the live app (Phase 2.2) and save the raw output.
+2. Open that saved artifact.
+3. Write one row per item **that the artifact actually contains**.
+
+Writing the table from the requirements doc and then producing an evidence file to match it
+is the inversion this rule exists to prevent. If an item is in the requirements but NOT in your
+extraction, that is either a bug to file or a row to mark `⬜ Untested` — never a `✅`. Likewise,
+list named items one per row; do not collapse them into a single aggregate row ("all 27
+options present") even if the arithmetic is consistent.
+
+**Build against the template directly — do not draft a freeform report and reshape it
+afterward.** Open `references/report-template.md` and write each section in the order it
+defines, copying its headers verbatim. Drafting a custom shape first and fixing it only when a
+check (or the user) rejects it forces a retest, which repeats usage already spent once.
+
+### 5.2b — Session Notes (MANDATORY)
+
+Immediately below the `## Report` section's closing fence in the same note file, add (or
+overwrite, on a retest) a `## Session Notes` section — the process-level detail that must not
+accumulate on the card.
+
+**Do not wrap this section in a ` ```markdown ` fence** — plain headings and bullets, outside
+any code fence, so tooling that locates the report block by its fences is not confused on the
+next retest.
+
+```
+## Session Notes
+
+- Started: [date] | Completed: [date]
+- Phase 2 (Targeted): [N/N] ticket items validated — [N] Pass / [N] Fail
+- Phase 3 (Comprehensive): [N] pass / [N] fail across [N] scenarios
+- Root cause: [one line, if a bug was found — omit otherwise]
+- Vault updated: feature doc ✓ | known-bugs.md ([bug IDs] or n/a) | _pipeline.md ✓
+- Spec updated: [yes/no — path if yes]
+```
+
+- Bullets only, no multi-paragraph narrative.
+- On a retest, **overwrite in place** — never append a second copy or dated history; long-term
+  retest history belongs in the feature vault file (Phase 4.1).
+- This is session metadata, not a second copy of the Bugs Found / Field-by-Field tables.
+
+### 5.3 — Compliance Self-Verify (MANDATORY, HARD GATE)
+
+**Do not move to Phase 6, move the card, or start the next queue card until this passes for
+THIS ticket.** A step can silently not happen (a skipped edit, a check that never fired) and
+nothing in the ticket's own narrative will reveal it. This step re-reads the files on disk the
+way an outside reviewer would. Run it inline in this session.
+
+1. **Re-open the linked note file fresh** — read it as it now exists on disk, not your
+   in-memory copy of what you wrote.
+2. **Report structure:** every section and header in `references/report-template.md` is
+   present, in order. If a report-format check/hook exists, run it directly against the file.
+3. **Report position:** the `## Report` heading is the first non-frontmatter content, directly
+   followed by its fence — not appended after Requirements/other content, and in the linked
+   note (not the feature vault file).
+4. **Session Notes:** `## Session Notes` exists immediately below the report's closing fence,
+   unfenced (5.2b).
+5. **Vault docs:** the feature vault file's `last_updated` and `_pipeline.md`'s relevant row
+   actually show today's date on disk.
+6. **Queue card:** `_queue.md` shows the short stub (5.1) in the column matching the actual
+   outcome (bugs found → needs-fix / parked state, unless explicitly user-accepted).
+
+If any check fails, fix it now, in this same phase — do not ask permission to repair a
+self-caught gap, and do not proceed on a failure.
 
 ---
 
@@ -491,18 +608,24 @@ confirmation step, regardless of what its note text still says.
   ```
   ➡  Next ticket: [title] — starting now
   ```
-- **If the Pending column is empty:** print:
+- **If the Pending column is empty:** run `/compliance` with no argument (an independent,
+  fresh-read audit of every card completed this drain run against this file's MANDATORY
+  outputs). Phase 5.3 is the ticket checking its own work in the context that produced it;
+  `/compliance` has no memory of what the session intended, which is what catches a fooled
+  self-check. Do not skip it on the reasoning that 5.3 "already covered it." Then print:
   ```
   📭  Queue empty — all pending tickets complete.
+  🔍  Compliance audit: [N] tickets checked, [N] failed checks, [N] unable to verify — see results/audits/compliance-YYYY-MM-DD.md
   ```
-  Then stop.
+  If the audit finds any failed check, surface the failing ticket(s) and requirement(s) in this
+  final message rather than leaving them buried in a file. Then stop.
 
 **Only pause to ask the user when:**
 1. The note file for the next card is missing or has no testable content (Phase 0.2 rule)
 2. The scenario matrix exceeds 20 scenarios (ask which categories to prioritize)
 3. A Stop-and-Ask blocker is hit mid-ticket (server bug, ambiguous result after one attempt)
 
-Never ask "Should I proceed to the next ticket?" — just proceed.
+Don't ask "Should I proceed to the next ticket?" between queue cards — continue automatically. This covers queue progression only; destructive or external actions still need user confirmation.
 
 ---
 
